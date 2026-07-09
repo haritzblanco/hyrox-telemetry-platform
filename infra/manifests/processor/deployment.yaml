@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: processor
+  namespace: hyrox
+  labels:
+    app.kubernetes.io/name: processor
+    app.kubernetes.io/component: stream-processor
+    app.kubernetes.io/part-of: hyrox-platform
+spec:
+  # Con --share-group cada réplica se suscribe al grupo compartido
+  # $share/processors/... y el broker entrega cada lectura a una sola réplica,
+  # sin escrituras duplicadas. Las réplicas las gestiona el HPA (hpa.yaml);
+  # fijar replicas aquí chocaría con él en cada kubectl apply.
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: processor
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: processor
+        app.kubernetes.io/component: stream-processor
+        app.kubernetes.io/part-of: hyrox-platform
+    spec:
+      # Solo en nodos de cómputo (label node-role=compute), nunca junto al
+      # broker y la base de datos: la evaluación demostró que compartir nodo
+      # con el broker estrangula al procesador. La anti-afinidad reparte las
+      # réplicas entre workers para que escalar sume CPU real.
+      nodeSelector:
+        node-role: compute
+      affinity:
+        podAntiAffinity:
+          # Preferida (no obligatoria): con más réplicas que workers se
+          # permite co-ubicar antes que dejar réplicas sin programar.
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: processor
+                topologyKey: kubernetes.io/hostname
+      containers:
+        - name: processor
+          image: hyrox/processor:0.2.0
+          # Imagen importada en la containerd local de cada nodo (sin registry).
+          imagePullPolicy: IfNotPresent
+          env:
+            # El token se toma del mismo Secret que usa InfluxDB.
+            - name: INFLUX_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: influxdb-auth
+                  key: token
+          args:
+            - --broker-host
+            - mosquitto
+            - --broker-port
+            - "1883"
+            - --qos
+            - "1"
+            - --influx-url
+            - http://influxdb:8086
+            - --influx-org
+            - hyrox
+            - --influx-bucket
+            - telemetry
+            # k8s sustituye $(INFLUX_TOKEN) por el valor del env definido arriba.
+            - --influx-token
+            - $(INFLUX_TOKEN)
+            # Grupo de suscripción compartida: reparte la carga entre réplicas.
+            - --share-group
+            - processors
+            - --log-level
+            - INFO
+          resources:
+            requests:
+              # 200m es la capacidad nominal medida de una réplica: ~195 mCPU
+              # sosteniendo 1.000 msg/s sin pérdida. El HPA escala sobre el
+              # porcentaje de este request.
+              cpu: "200m"
+              memory: "64Mi"
+            limits:
+              cpu: "1000m"
+              memory: "256Mi"

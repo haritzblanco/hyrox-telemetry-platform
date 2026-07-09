@@ -1,0 +1,51 @@
+# Autoescalado del procesador en función de los atletas en pista.
+#
+# Dimensionado con la evaluación experimental (tanda 20260617_065957): a
+# 1 lectura/s por atleta, N atletas son ~N msg/s. Una réplica sostiene
+# 1.000 msg/s sin pérdida usando ~195 mCPU (de ahí el request de 200m), y el
+# pico observado en carreras HYROX ronda los 800 atletas simultáneos. Con el
+# umbral al 75% la segunda réplica entra hacia los 750 atletas, antes de ese
+# pico. En valle (<400 atletas) el HPA vuelve a una réplica.
+#
+# maxReplicas=4 acota el escalado al tamaño del testbed (workers de 2 vCPU):
+# la evaluación mostró que por encima de 2-3 réplicas hacen falta más nodos,
+# no más pods.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: processor
+  namespace: hyrox
+  labels:
+    app.kubernetes.io/name: processor
+    app.kubernetes.io/component: stream-processor
+    app.kubernetes.io/part-of: hyrox-platform
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: processor
+  minReplicas: 1
+  maxReplicas: 4
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 75
+  behavior:
+    scaleUp:
+      # Reacciona rápido a una tanda de salida: puede doblar réplicas cada 30 s.
+      stabilizationWindowSeconds: 0
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 30
+    scaleDown:
+      # Conservador al bajar: espera 3 min de calma para no oscilar con los
+      # valles cortos entre tandas (roxzones, huecos entre salidas).
+      stabilizationWindowSeconds: 180
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 60
