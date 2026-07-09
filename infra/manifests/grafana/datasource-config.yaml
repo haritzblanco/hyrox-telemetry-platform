@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasources
+  namespace: hyrox
+  labels:
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/part-of: hyrox-platform
+data:
+  datasources.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: InfluxDB
+        type: influxdb
+        access: proxy
+        url: http://influxdb:8086
+        uid: influxdb-hyrox
+        jsonData:
+          version: Flux
+          organization: hyrox
+          defaultBucket: telemetry
+        secureJsonData:
+          token: token1234567890
+        isDefault: true

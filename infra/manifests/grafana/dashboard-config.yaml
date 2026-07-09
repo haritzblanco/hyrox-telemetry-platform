@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-provider
+  namespace: hyrox
+  labels:
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/part-of: hyrox-platform
+data:
+  provider.yaml: |
+    apiVersion: 1
+    providers:
+      - name: hyrox-dashboards
+        orgId: 1
+        folder: Hyrox
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards

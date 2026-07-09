@@ -1,0 +1,1812 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-hyrox
+  namespace: hyrox
+  labels:
+    grafana_dashboard: "1"
+data:
+  hyrox.json: |-
+    {
+      "annotations": {
+        "list": [
+          {
+            "builtIn": 1,
+            "datasource": {
+              "type": "grafana",
+              "uid": "-- Grafana --"
+            },
+            "enable": true,
+            "hide": true,
+            "iconColor": "rgba(0, 211, 255, 1)",
+            "name": "Annotations & Alerts",
+            "type": "dashboard"
+          }
+        ]
+      },
+      "editable": true,
+      "fiscalYearStartMonth": 0,
+      "graphTooltip": 1,
+      "id": null,
+      "links": [],
+      "panels": [
+        {
+          "collapsed": false,
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 0
+          },
+          "id": 100,
+          "title": "Estado Actual",
+          "type": "row"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-hyrox"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "blue",
+                    "value": null
+                  }
+                ]
+              },
+              "unit": "none",
+              "decimals": 0,
+              "displayName": "Atletas"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 4,
+            "x": 0,
+            "y": 1
+          },
+          "id": 1,
+          "options": {
+            "colorMode": "background",
+            "graphMode": "none",
+            "justifyMode": "center",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "influxdb",
+                "uid": "influxdb-hyrox"
+              },
+              "query": "from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\")\n  |> filter(fn: (r) => r[\"session_id\"] =~ /${session_id}/)\n  |> filter(fn: (r) => r._field == \"heart_rate\")\n  |> group(columns: [\"athlete_id\"])\n  |> last()\n  |> group()\n  |> count()",
+              "refId": "A"
+            }
+          ],
+          "title": "Atletas en carrera",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-hyrox"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 150
+                  },
+                  {
+                    "color": "red",
+                    "value": 175
+                  }
+                ]
+              },
+              "unit": "none",
+              "decimals": 0
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 4,
+            "x": 4,
+            "y": 1
+          },
+          "id": 2,
+          "options": {
+            "colorMode": "background",
+            "graphMode": "area",
+            "justifyMode": "center",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "influxdb",
+                "uid": "influxdb-hyrox"
+              },
+              "query": "from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\")\n  |> filter(fn: (r) => r[\"session_id\"] =~ /${session_id}/)\n  |> filter(fn: (r) => r._field == \"heart_rate\")\n  |> group()\n  |> aggregateWindow(every: 1m, fn: mean, createEmpty: false)",
+              "refId": "A"
+            }
+          ],
+          "title": "Pulso medio (bpm)",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-hyrox"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 170
+                  },
+                  {
+                    "color": "red",
+                    "value": 185
+                  }
+                ]
+              },
+              "unit": "none",
+              "decimals": 0
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 4,
+            "x": 8,
+            "y": 1
+          },
+          "id": 3,
+          "options": {
+            "colorMode": "background",
+            "graphMode": "area",
+            "justifyMode": "center",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "influxdb",
+                "uid": "influxdb-hyrox"
+              },
+              "query": "from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\")\n  |> filter(fn: (r) => r[\"session_id\"] =~ /${session_id}/)\n  |> filter(fn: (r) => r._field == \"heart_rate\")\n  |> group()\n  |> aggregateWindow(every: 1m, fn: max, createEmpty: false)",
+              "refId": "A"
+            }
+          ],
+          "title": "Pulso máximo (bpm)",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-hyrox"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "purple",
+                    "value": null
+                  }
+                ]
+              },
+              "unit": "watt",
+              "decimals": 0
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 4,
+            "x": 12,
+            "y": 1
+          },
+          "id": 4,
+          "options": {
+            "colorMode": "background",
+            "graphMode": "area",
+            "justifyMode": "center",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "influxdb",
+                "uid": "influxdb-hyrox"
+              },
+              "query": "from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\")\n  |> filter(fn: (r) => r[\"session_id\"] =~ /${session_id}/)\n  |> filter(fn: (r) => r._field == \"power\")\n  |> group()\n  |> aggregateWindow(every: 1m, fn: mean, createEmpty: false)",
+              "refId": "A"
+            }
+          ],
+          "title": "Potencia media (W)",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-hyrox"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "red",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 10
+                  },
+                  {
+                    "color": "green",
+                    "value": 12
+                  }
+                ]
+              },
+              "unit": "velocitykmh",
+              "decimals": 1
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 4,
+            "x": 16,
+            "y": 1
+          },
+          "id": 5,
+          "options": {
+            "colorMode": "background",
+            "graphMode": "area",
+            "justifyMode": "center",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "influxdb",
+                "uid": "influxdb-hyrox"
+              },
+              "query": "from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\")\n  |> filter(fn: (r) => r[\"session_id\"] =~ /${session_id}/)\n  |> filter(fn: (r) => r._field == \"speed\")\n  |> group()\n  |> aggregateWindow(every: 1m, fn: mean, createEmpty: false)\n  |> map(fn: (r) => ({r with _value: r._value * 3.6}))",
+              "refId": "A"
+            }
+          ],
+          "title": "Velocidad media (km/h)",
+          "type": "stat"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-hyrox"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "semi-dark-blue",
+                    "value": null
+                  }
+                ]
+              },
+              "unit": "dthms",
+              "decimals": 0
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 4,
+            "x": 20,
+            "y": 1
+          },
+          "id": 6,
+          "options": {
+            "colorMode": "background",
+            "graphMode": "area",
+            "justifyMode": "center",
+            "orientation": "auto",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "textMode": "auto"
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "influxdb",
+                "uid": "influxdb-hyrox"
+              },
+              "query": "from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\")\n  |> filter(fn: (r) => r[\"session_id\"] =~ /${session_id}/)\n  |> filter(fn: (r) => r._field == \"elapsed_seconds\")\n  |> group()\n  |> aggregateWindow(every: 1m, fn: mean, createEmpty: false)\n  |> map(fn: (r) => ({r with _value: float(v: r._value)}))",
+              "refId": "A"
+            }
+          ],
+          "title": "Tiempo medio de sesion",
+          "type": "stat"
+        },
+        {
+          "collapsed": false,
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 5
+          },
+          "id": 101,
+          "title": "Posición en Carrera",
+          "type": "row"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-hyrox"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              },
+              "custom": {
+                "align": "auto",
+                "cellOptions": {
+                  "type": "auto"
+                },
+                "inspect": false
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "heart_rate"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "FC actual (bpm)"
+                  },
+                  {
+                    "id": "custom.cellOptions",
+                    "value": {
+                      "mode": "gradient",
+                      "type": "color-background"
+                    }
+                  },
+                  {
+                    "id": "thresholds",
+                    "value": {
+                      "mode": "absolute",
+                      "steps": [
+                        {
+                          "color": "green",
+                          "value": null
+                        },
+                        {
+                          "color": "yellow",
+                          "value": 150
+                        },
+                        {
+                          "color": "red",
+                          "value": 175
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "elapsed_seconds"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Tiempo total"
+                  },
+                  {
+                    "id": "unit",
+                    "value": "clocks"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "distance"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Distancia (m)"
+                  },
+                  {
+                    "id": "unit",
+                    "value": "lengthm"
+                  },
+                  {
+                    "id": "decimals",
+                    "value": 0
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "athlete_id"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Atleta"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "phase"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Fase actual"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "phase_type"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Tipo"
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 24,
+            "x": 0,
+            "y": 6
+          },
+          "id": 7,
+          "options": {
+            "cellHeight": "sm",
+            "footer": {
+              "countRows": false,
+              "fields": "",
+              "reducer": [
+                "sum"
+              ],
+              "show": false
+            },
+            "showHeader": true,
+            "sortBy": [
+              {
+                "desc": true,
+                "displayName": "Distancia (m)"
+              }
+            ]
+          },
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "_time": true,
+                  "_start": true,
+                  "_stop": true,
+                  "_measurement": true
+                },
+                "indexByName": {
+                  "athlete_id": 0,
+                  "phase": 1,
+                  "phase_type": 2,
+                  "elapsed_seconds": 3,
+                  "distance": 4,
+                  "heart_rate": 5
+                },
+                "renameByName": {
+                  "athlete_id": "Atleta",
+                  "phase": "Fase actual",
+                  "phase_type": "Tipo",
+                  "elapsed_seconds": "Tiempo (s)",
+                  "distance": "Distancia (m)",
+                  "heart_rate": "FC actual (bpm)"
+                }
+              }
+            }
+          ],
+          "targets": [
+            {
+              "datasource": {
+                "type": "influxdb",
+                "uid": "influxdb-hyrox"
+              },
+              "query": "from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\")\n  |> filter(fn: (r) => r[\"session_id\"] =~ /${session_id}/)\n  |> filter(fn: (r) => r._field == \"elapsed_seconds\" or r._field == \"distance\" or r._field == \"heart_rate\")\n  |> group(columns: [\"athlete_id\", \"_field\"])\n  |> last()\n  |> map(fn: (r) => ({r with _time: 1970-01-01T00:00:00Z, _value: float(v: r._value)}))\n  |> group(columns: [\"athlete_id\", \"phase\", \"phase_type\"])\n  |> pivot(rowKey: [\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> keep(columns: [\"athlete_id\", \"phase\", \"phase_type\", \"elapsed_seconds\", \"distance\", \"heart_rate\"])\n  |> group()\n  |> sort(columns: [\"elapsed_seconds\"], desc: true)",
+              "refId": "A"
+            }
+          ],
+          "title": "Estado de carrera por atleta",
+          "type": "table"
+        },
+        {
+          "collapsed": false,
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 13
+          },
+          "id": 102,
+          "title": "Biometricas en Tiempo Real",
+          "type": "row"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-hyrox"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "bpm",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 12,
+                "gradientMode": "opacity",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "smooth",
+                "lineWidth": 2,
+                "pointSize": 4,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "line+area"
+                }
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "transparent",
+                    "value": null
+                  },
+                  {
+                    "color": "rgba(255, 166, 0, 0.15)",
+                    "value": 150
+                  },
+                  {
+                    "color": "rgba(255, 0, 0, 0.15)",
+                    "value": 175
+                  }
+                ]
+              },
+              "min": 50,
+              "max": 210,
+              "unit": "none"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 9,
+            "w": 24,
+            "x": 0,
+            "y": 14
+          },
+          "id": 8,
+          "options": {
+            "legend": {
+              "calcs": [
+                "mean",
+                "max",
+                "last"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "influxdb",
+                "uid": "influxdb-hyrox"
+              },
+              "query": "from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\")\n  |> filter(fn: (r) => r[\"session_id\"] =~ /${session_id}/)\n  |> filter(fn: (r) => r._field == \"heart_rate\")\n  |> filter(fn: (r) => r[\"athlete_id\"] =~ /${athlete_id}/)\n  |> group(columns: [\"athlete_id\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)",
+              "refId": "A"
+            }
+          ],
+          "title": "Ritmo Cardiaco",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-hyrox"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "W",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 12,
+                "gradientMode": "opacity",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "smooth",
+                "lineWidth": 2,
+                "pointSize": 4,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "unit": "watt",
+              "min": 0
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 23
+          },
+          "id": 9,
+          "options": {
+            "legend": {
+              "calcs": [
+                "mean",
+                "max"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "influxdb",
+                "uid": "influxdb-hyrox"
+              },
+              "query": "from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\")\n  |> filter(fn: (r) => r[\"session_id\"] =~ /${session_id}/)\n  |> filter(fn: (r) => r._field == \"power\")\n  |> filter(fn: (r) => r[\"athlete_id\"] =~ /${athlete_id}/)\n  |> group(columns: [\"athlete_id\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)",
+              "refId": "A"
+            }
+          ],
+          "title": "Potencia (W)",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-hyrox"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "km/h",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 12,
+                "gradientMode": "opacity",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "smooth",
+                "lineWidth": 2,
+                "pointSize": 4,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "unit": "velocitykmh",
+              "min": 0
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 23
+          },
+          "id": 10,
+          "options": {
+            "legend": {
+              "calcs": [
+                "mean",
+                "max"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "influxdb",
+                "uid": "influxdb-hyrox"
+              },
+              "query": "from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\")\n  |> filter(fn: (r) => r[\"session_id\"] =~ /${session_id}/)\n  |> filter(fn: (r) => r._field == \"speed\")\n  |> filter(fn: (r) => r[\"athlete_id\"] =~ /${athlete_id}/)\n  |> group(columns: [\"athlete_id\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> map(fn: (r) => ({r with _value: r._value * 3.6}))",
+              "refId": "A"
+            }
+          ],
+          "title": "Velocidad (km/h)",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-hyrox"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "rpm",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 12,
+                "gradientMode": "opacity",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "smooth",
+                "lineWidth": 2,
+                "pointSize": 4,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "unit": "rotrpm",
+              "min": 0
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 31
+          },
+          "id": 11,
+          "options": {
+            "legend": {
+              "calcs": [
+                "mean",
+                "max"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "influxdb",
+                "uid": "influxdb-hyrox"
+              },
+              "query": "from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\")\n  |> filter(fn: (r) => r[\"session_id\"] =~ /${session_id}/)\n  |> filter(fn: (r) => r._field == \"cadence\")\n  |> filter(fn: (r) => r[\"athlete_id\"] =~ /${athlete_id}/)\n  |> group(columns: [\"athlete_id\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)",
+              "refId": "A"
+            }
+          ],
+          "title": "Cadencia (rpm)",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-hyrox"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "m",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 12,
+                "gradientMode": "opacity",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "smooth",
+                "lineWidth": 2,
+                "pointSize": 4,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "unit": "lengthm",
+              "min": 0,
+              "decimals": 0
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 31
+          },
+          "id": 12,
+          "options": {
+            "legend": {
+              "calcs": [
+                "last"
+              ],
+              "displayMode": "table",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "influxdb",
+                "uid": "influxdb-hyrox"
+              },
+              "query": "from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\")\n  |> filter(fn: (r) => r[\"session_id\"] =~ /${session_id}/)\n  |> filter(fn: (r) => r._field == \"distance\")\n  |> filter(fn: (r) => r[\"athlete_id\"] =~ /${athlete_id}/)\n  |> group(columns: [\"athlete_id\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: last, createEmpty: false)",
+              "refId": "A"
+            }
+          ],
+          "title": "Distancia acumulada (m)",
+          "type": "timeseries"
+        },
+        {
+          "collapsed": false,
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 39
+          },
+          "id": 103,
+          "title": "Analisis por Fase",
+          "type": "row"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-hyrox"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "segundos",
+                "axisPlacement": "auto",
+                "fillOpacity": 80,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineWidth": 1,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "unit": "clocks",
+              "decimals": 0
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 0,
+            "y": 40
+          },
+          "id": 13,
+          "options": {
+            "barRadius": 0.5,
+            "barWidth": 0.85,
+            "fullHighlight": false,
+            "groupWidth": 0.7,
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": false
+            },
+            "orientation": "auto",
+            "showValue": "auto",
+            "stacking": "none",
+            "tooltip": {
+              "mode": "single",
+              "sort": "none"
+            },
+            "xField": "phase_label",
+            "xTickLabelRotation": -30,
+            "xTickLabelSpacing": 80
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "influxdb",
+                "uid": "influxdb-hyrox"
+              },
+              "query": "from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\")\n  |> filter(fn: (r) => r[\"session_id\"] =~ /${session_id}/)\n  |> filter(fn: (r) => r._field == \"elapsed_seconds\")\n  |> group(columns: [\"phase\", \"phase_type\", \"athlete_id\"])\n  |> count()\n  |> group(columns: [\"phase\", \"phase_type\"])\n  |> mean()\n  |> map(fn: (r) => ({\n      _time: 1970-01-01T00:00:00Z,\n      run_order: if r.phase == \"run_1\" then 1 else if r.phase == \"skierg\" then 2 else if r.phase == \"run_2\" then 3 else if r.phase == \"sled_push\" then 4 else if r.phase == \"run_3\" then 5 else if r.phase == \"sled_pull\" then 6 else if r.phase == \"run_4\" then 7 else if r.phase == \"burpee_bj\" then 8 else if r.phase == \"run_5\" then 9 else if r.phase == \"row\" then 10 else if r.phase == \"run_6\" then 11 else if r.phase == \"farmers_carry\" then 12 else if r.phase == \"run_7\" then 13 else if r.phase == \"sandbag_lunges\" then 14 else if r.phase == \"run_8\" then 15 else if r.phase == \"wall_balls\" then 16 else 99,\n      phase_label: if r.phase == \"run_1\" then \"Run 1\" else if r.phase == \"skierg\" then \"SkiErg\" else if r.phase == \"run_2\" then \"Run 2\" else if r.phase == \"sled_push\" then \"Sled Push\" else if r.phase == \"run_3\" then \"Run 3\" else if r.phase == \"sled_pull\" then \"Sled Pull\" else if r.phase == \"run_4\" then \"Run 4\" else if r.phase == \"burpee_bj\" then \"Burpee BJ\" else if r.phase == \"run_5\" then \"Run 5\" else if r.phase == \"row\" then \"Row\" else if r.phase == \"run_6\" then \"Run 6\" else if r.phase == \"farmers_carry\" then \"Farmers Carry\" else if r.phase == \"run_7\" then \"Run 7\" else if r.phase == \"sandbag_lunges\" then \"Sandbag Lunges\" else if r.phase == \"run_8\" then \"Run 8\" else if r.phase == \"wall_balls\" then \"Wall Balls\" else r.phase,\n      _value: r._value\n  }))\n  |> rename(columns: {_value: \"Duración\"})\n  |> group()\n  |> sort(columns: [\"run_order\"])",
+              "refId": "A"
+            }
+          ],
+          "title": "Duracion media por fase",
+          "type": "barchart"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-hyrox"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "bpm",
+                "axisPlacement": "auto",
+                "fillOpacity": 80,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineWidth": 1,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "unit": "none",
+              "decimals": 0,
+              "min": 80,
+              "max": 200
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 10,
+            "w": 12,
+            "x": 12,
+            "y": 40
+          },
+          "id": 14,
+          "options": {
+            "barRadius": 0.5,
+            "barWidth": 0.85,
+            "fullHighlight": false,
+            "groupWidth": 0.7,
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": false
+            },
+            "orientation": "auto",
+            "showValue": "auto",
+            "stacking": "none",
+            "tooltip": {
+              "mode": "single",
+              "sort": "none"
+            },
+            "xField": "phase_label",
+            "xTickLabelRotation": -30,
+            "xTickLabelSpacing": 80
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "influxdb",
+                "uid": "influxdb-hyrox"
+              },
+              "query": "from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\")\n  |> filter(fn: (r) => r[\"session_id\"] =~ /${session_id}/)\n  |> filter(fn: (r) => r._field == \"heart_rate\")\n  |> group(columns: [\"phase\", \"phase_type\"])\n  |> mean()\n  |> map(fn: (r) => ({\n      _time: 1970-01-01T00:00:00Z,\n      run_order: if r.phase == \"run_1\" then 1 else if r.phase == \"skierg\" then 2 else if r.phase == \"run_2\" then 3 else if r.phase == \"sled_push\" then 4 else if r.phase == \"run_3\" then 5 else if r.phase == \"sled_pull\" then 6 else if r.phase == \"run_4\" then 7 else if r.phase == \"burpee_bj\" then 8 else if r.phase == \"run_5\" then 9 else if r.phase == \"row\" then 10 else if r.phase == \"run_6\" then 11 else if r.phase == \"farmers_carry\" then 12 else if r.phase == \"run_7\" then 13 else if r.phase == \"sandbag_lunges\" then 14 else if r.phase == \"run_8\" then 15 else if r.phase == \"wall_balls\" then 16 else 99,\n      phase_label: if r.phase == \"run_1\" then \"Run 1\" else if r.phase == \"skierg\" then \"SkiErg\" else if r.phase == \"run_2\" then \"Run 2\" else if r.phase == \"sled_push\" then \"Sled Push\" else if r.phase == \"run_3\" then \"Run 3\" else if r.phase == \"sled_pull\" then \"Sled Pull\" else if r.phase == \"run_4\" then \"Run 4\" else if r.phase == \"burpee_bj\" then \"Burpee BJ\" else if r.phase == \"run_5\" then \"Run 5\" else if r.phase == \"row\" then \"Row\" else if r.phase == \"run_6\" then \"Run 6\" else if r.phase == \"farmers_carry\" then \"Farmers Carry\" else if r.phase == \"run_7\" then \"Run 7\" else if r.phase == \"sandbag_lunges\" then \"Sandbag Lunges\" else if r.phase == \"run_8\" then \"Run 8\" else if r.phase == \"wall_balls\" then \"Wall Balls\" else r.phase,\n      _value: r._value\n  }))\n  |> rename(columns: {_value: \"HR Medio (bpm)\"})\n  |> group()\n  |> sort(columns: [\"run_order\"])",
+              "refId": "A"
+            }
+          ],
+          "title": "Pulso medio por fase",
+          "type": "barchart"
+        },
+        {
+          "collapsed": false,
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 50
+          },
+          "id": 104,
+          "title": "Comparativa entre Atletas",
+          "type": "row"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-hyrox"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              },
+              "custom": {
+                "align": "auto",
+                "cellOptions": {
+                  "type": "auto"
+                },
+                "inspect": false
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "athlete_id"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Atleta"
+                  },
+                  {
+                    "id": "custom.width",
+                    "value": 140
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "heart_rate"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "HR Medio (bpm)"
+                  },
+                  {
+                    "id": "unit",
+                    "value": "none"
+                  },
+                  {
+                    "id": "decimals",
+                    "value": 0
+                  },
+                  {
+                    "id": "custom.cellOptions",
+                    "value": {
+                      "mode": "gradient",
+                      "type": "color-background"
+                    }
+                  },
+                  {
+                    "id": "thresholds",
+                    "value": {
+                      "mode": "absolute",
+                      "steps": [
+                        {
+                          "color": "green",
+                          "value": null
+                        },
+                        {
+                          "color": "yellow",
+                          "value": 150
+                        },
+                        {
+                          "color": "red",
+                          "value": 175
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "power"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Potencia Media (W)"
+                  },
+                  {
+                    "id": "unit",
+                    "value": "watt"
+                  },
+                  {
+                    "id": "decimals",
+                    "value": 0
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "speed"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Velocidad Media (km/h)"
+                  },
+                  {
+                    "id": "unit",
+                    "value": "velocitykmh"
+                  },
+                  {
+                    "id": "decimals",
+                    "value": 1
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 10,
+            "w": 24,
+            "x": 0,
+            "y": 51
+          },
+          "id": 15,
+          "options": {
+            "cellHeight": "sm",
+            "footer": {
+              "countRows": false,
+              "fields": "",
+              "reducer": [
+                "mean"
+              ],
+              "show": true,
+              "enablePagination": false
+            },
+            "showHeader": true,
+            "sortBy": [
+              {
+                "desc": false,
+                "displayName": "Atleta"
+              }
+            ]
+          },
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "_time": true,
+                  "_start": true,
+                  "_stop": true,
+                  "_measurement": true
+                },
+                "indexByName": {
+                  "athlete_id": 0,
+                  "heart_rate": 1,
+                  "power": 2,
+                  "speed": 3
+                },
+                "renameByName": {
+                  "athlete_id": "Atleta",
+                  "heart_rate": "FC Media (bpm)",
+                  "power": "Potencia Media (W)",
+                  "speed": "Velocidad Media (km/h)"
+                }
+              }
+            }
+          ],
+          "targets": [
+            {
+              "datasource": {
+                "type": "influxdb",
+                "uid": "influxdb-hyrox"
+              },
+              "query": "from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\")\n  |> filter(fn: (r) => r[\"session_id\"] =~ /${session_id}/)\n  |> filter(fn: (r) => r._field == \"heart_rate\" or r._field == \"power\" or r._field == \"speed\")\n  |> group(columns: [\"athlete_id\", \"_field\"])\n  |> mean()\n  |> map(fn: (r) => ({r with _time: 1970-01-01T00:00:00Z, _value: float(v: r._value)}))\n  |> group(columns: [\"athlete_id\"])\n  |> pivot(rowKey: [\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> map(fn: (r) => ({r with speed: r.speed * 3.6}))\n  |> keep(columns: [\"athlete_id\", \"heart_rate\", \"power\", \"speed\"])\n  |> group()\n  |> sort(columns: [\"athlete_id\"])",
+              "refId": "A"
+            }
+          ],
+          "title": "Estadisticas medias por atleta (sesion completa)",
+          "type": "table"
+        },
+        {
+          "collapsed": false,
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 61
+          },
+          "id": 105,
+          "title": "Splits & Distribución por Fase",
+          "type": "row"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-hyrox"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "fillOpacity": 85,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineWidth": 1,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "unit": "clocks",
+              "decimals": 0
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "run"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Carrera"
+                  },
+                  {
+                    "id": "color",
+                    "value": {
+                      "mode": "fixed",
+                      "fixedColor": "#5794F2"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "station"
+                },
+                "properties": [
+                  {
+                    "id": "displayName",
+                    "value": "Estación"
+                  },
+                  {
+                    "id": "color",
+                    "value": {
+                      "mode": "fixed",
+                      "fixedColor": "#FF7A45"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 14,
+            "w": 14,
+            "x": 0,
+            "y": 62
+          },
+          "id": 16,
+          "options": {
+            "barRadius": 0.3,
+            "barWidth": 0.85,
+            "fullHighlight": false,
+            "groupWidth": 0.7,
+            "legend": {
+              "calcs": [
+                "mean",
+                "max"
+              ],
+              "displayMode": "table",
+              "placement": "right",
+              "showLegend": true
+            },
+            "orientation": "horizontal",
+            "showValue": "always",
+            "stacking": "none",
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            },
+            "xField": "phase_label",
+            "xTickLabelRotation": 0,
+            "xTickLabelSpacing": 0
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "influxdb",
+                "uid": "influxdb-hyrox"
+              },
+              "query": "from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\")\n  |> filter(fn: (r) => r[\"session_id\"] =~ /${session_id}/)\n  |> filter(fn: (r) => r._field == \"elapsed_seconds\")\n  |> filter(fn: (r) => r[\"athlete_id\"] =~ /${athlete_id}/)\n  |> group(columns: [\"athlete_id\", \"phase\", \"phase_type\"])\n  |> count()\n  |> group(columns: [\"phase\", \"phase_type\"])\n  |> mean()\n  |> map(fn: (r) => ({\n      _time: 1970-01-01T00:00:00Z,\n      run_order: if r.phase == \"run_1\" then 1 else if r.phase == \"skierg\" then 2 else if r.phase == \"run_2\" then 3 else if r.phase == \"sled_push\" then 4 else if r.phase == \"run_3\" then 5 else if r.phase == \"sled_pull\" then 6 else if r.phase == \"run_4\" then 7 else if r.phase == \"burpee_bj\" then 8 else if r.phase == \"run_5\" then 9 else if r.phase == \"row\" then 10 else if r.phase == \"run_6\" then 11 else if r.phase == \"farmers_carry\" then 12 else if r.phase == \"run_7\" then 13 else if r.phase == \"sandbag_lunges\" then 14 else if r.phase == \"run_8\" then 15 else if r.phase == \"wall_balls\" then 16 else 99,\n      phase_label: if r.phase == \"run_1\" then \"Run 1\" else if r.phase == \"skierg\" then \"SkiErg\" else if r.phase == \"run_2\" then \"Run 2\" else if r.phase == \"sled_push\" then \"Sled Push\" else if r.phase == \"run_3\" then \"Run 3\" else if r.phase == \"sled_pull\" then \"Sled Pull\" else if r.phase == \"run_4\" then \"Run 4\" else if r.phase == \"burpee_bj\" then \"Burpee BJ\" else if r.phase == \"run_5\" then \"Run 5\" else if r.phase == \"row\" then \"Row\" else if r.phase == \"run_6\" then \"Run 6\" else if r.phase == \"farmers_carry\" then \"Farmers Carry\" else if r.phase == \"run_7\" then \"Run 7\" else if r.phase == \"sandbag_lunges\" then \"Sandbag Lunges\" else if r.phase == \"run_8\" then \"Run 8\" else if r.phase == \"wall_balls\" then \"Wall Balls\" else r.phase,\n      phase_type: r.phase_type,\n      _value: r._value\n  }))\n  |> pivot(rowKey: [\"run_order\", \"phase_label\"], columnKey: [\"phase_type\"], valueColumn: \"_value\")\n  |> group()\n  |> sort(columns: [\"run_order\"])",
+              "refId": "A"
+            }
+          ],
+          "title": "Splits por Fase",
+          "transformations": [],
+          "type": "barchart"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-hyrox"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "fillOpacity": 75,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineWidth": 1,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "unit": "clocks",
+              "decimals": 0
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 14,
+            "w": 10,
+            "x": 14,
+            "y": 62
+          },
+          "id": 17,
+          "options": {
+            "barRadius": 0.3,
+            "barWidth": 0.65,
+            "fullHighlight": false,
+            "groupWidth": 0.85,
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "orientation": "horizontal",
+            "showValue": "never",
+            "stacking": "none",
+            "tooltip": {
+              "mode": "multi",
+              "sort": "asc"
+            },
+            "xField": "phase_label",
+            "xTickLabelRotation": 0,
+            "xTickLabelSpacing": 0
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "influxdb",
+                "uid": "influxdb-hyrox"
+              },
+              "query": "from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\")\n  |> filter(fn: (r) => r[\"session_id\"] =~ /${session_id}/)\n  |> filter(fn: (r) => r._field == \"elapsed_seconds\")\n  |> group(columns: [\"athlete_id\", \"phase\"])\n  |> count()\n  |> group()\n  |> map(fn: (r) => ({\n      _time: 1970-01-01T00:00:00Z,\n      athlete_id: r.athlete_id,\n      _value: float(v: r._value),\n      run_order: if r.phase == \"run_1\" then 1 else if r.phase == \"skierg\" then 2 else if r.phase == \"run_2\" then 3 else if r.phase == \"sled_push\" then 4 else if r.phase == \"run_3\" then 5 else if r.phase == \"sled_pull\" then 6 else if r.phase == \"run_4\" then 7 else if r.phase == \"burpee_bj\" then 8 else if r.phase == \"run_5\" then 9 else if r.phase == \"row\" then 10 else if r.phase == \"run_6\" then 11 else if r.phase == \"farmers_carry\" then 12 else if r.phase == \"run_7\" then 13 else if r.phase == \"sandbag_lunges\" then 14 else if r.phase == \"run_8\" then 15 else if r.phase == \"wall_balls\" then 16 else 99,\n      phase_label: if r.phase == \"run_1\" then \"Run 1\" else if r.phase == \"skierg\" then \"SkiErg\" else if r.phase == \"run_2\" then \"Run 2\" else if r.phase == \"sled_push\" then \"Sled Push\" else if r.phase == \"run_3\" then \"Run 3\" else if r.phase == \"sled_pull\" then \"Sled Pull\" else if r.phase == \"run_4\" then \"Run 4\" else if r.phase == \"burpee_bj\" then \"Burpee BJ\" else if r.phase == \"run_5\" then \"Run 5\" else if r.phase == \"row\" then \"Row\" else if r.phase == \"run_6\" then \"Run 6\" else if r.phase == \"farmers_carry\" then \"Farmers Carry\" else if r.phase == \"run_7\" then \"Run 7\" else if r.phase == \"sandbag_lunges\" then \"Sandbag Lunges\" else if r.phase == \"run_8\" then \"Run 8\" else if r.phase == \"wall_balls\" then \"Wall Balls\" else r.phase\n  }))\n  |> pivot(rowKey: [\"run_order\", \"phase_label\"], columnKey: [\"athlete_id\"], valueColumn: \"_value\")\n  |> group()\n  |> sort(columns: [\"run_order\"])",
+              "refId": "A"
+            }
+          ],
+          "title": "Distribución de Tiempos entre Atletas",
+          "type": "barchart"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-hyrox"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "fillOpacity": 90,
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineWidth": 1,
+                "spanNulls": false
+              },
+              "mappings": [
+                {
+                  "type": "value",
+                  "options": {
+                    "run": {
+                      "color": "#5794F2",
+                      "text": "Carrera",
+                      "index": 0
+                    },
+                    "station": {
+                      "color": "#FF7A45",
+                      "text": "Estación",
+                      "index": 1
+                    }
+                  }
+                }
+              ],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 24,
+            "x": 0,
+            "y": 76
+          },
+          "id": 18,
+          "options": {
+            "alignValue": "left",
+            "legend": {
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "mergeValues": true,
+            "rowHeight": 0.9,
+            "showValue": "auto",
+            "tooltip": {
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "datasource": {
+                "type": "influxdb",
+                "uid": "influxdb-hyrox"
+              },
+              "query": "from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\")\n  |> filter(fn: (r) => r[\"session_id\"] =~ /${session_id}/)\n  |> filter(fn: (r) => r._field == \"heart_rate\")\n  |> filter(fn: (r) => r[\"athlete_id\"] =~ /${athlete_id}/)\n  |> group(columns: [\"athlete_id\"])\n  |> aggregateWindow(every: 30s, fn: last, createEmpty: false)\n  |> map(fn: (r) => ({_time: r._time, _value: r.phase_type, _field: r.athlete_id}))\n  |> group(columns: [\"_field\"])",
+              "refId": "A"
+            }
+          ],
+          "title": "Timeline de Fases por Atleta",
+          "type": "state-timeline"
+        }
+      ],
+      "refresh": "5s",
+      "schemaVersion": 41,
+      "tags": [
+        "hyrox"
+      ],
+      "templating": {
+        "list": [
+          {
+            "allValue": ".*",
+            "current": {
+              "selected": false,
+              "text": "All",
+              "value": "$__all"
+            },
+            "datasource": {
+              "type": "influxdb",
+              "uid": "influxdb-hyrox"
+            },
+            "definition": "import \"influxdata/influxdb/schema\"\nschema.tagValues(bucket: \"telemetry\", tag: \"session_id\")",
+            "hide": 0,
+            "includeAll": true,
+            "label": "Sesión",
+            "multi": false,
+            "name": "session_id",
+            "options": [],
+            "query": "import \"influxdata/influxdb/schema\"\nschema.tagValues(bucket: \"telemetry\", tag: \"session_id\")",
+            "refresh": 2,
+            "regex": "",
+            "sort": 2,
+            "type": "query"
+          },
+          {
+            "allValue": ".*",
+            "current": {
+              "selected": true,
+              "text": "All",
+              "value": "$__all"
+            },
+            "datasource": {
+              "type": "influxdb",
+              "uid": "influxdb-hyrox"
+            },
+            "definition": "import \"influxdata/influxdb/schema\"\nschema.tagValues(bucket: \"telemetry\", tag: \"athlete_id\")",
+            "hide": 0,
+            "includeAll": true,
+            "label": "Atleta",
+            "multi": true,
+            "name": "athlete_id",
+            "options": [],
+            "query": "import \"influxdata/influxdb/schema\"\nschema.tagValues(bucket: \"telemetry\", tag: \"athlete_id\")",
+            "refresh": 2,
+            "regex": "",
+            "sort": 1,
+            "type": "query"
+          }
+        ]
+      },
+      "time": {
+        "from": "now-1h",
+        "to": "now"
+      },
+      "timepicker": {},
+      "timezone": "browser",
+      "title": "Hyrox - Overview Atletas",
+      "uid": "hyrox-overview",
+      "version": 1,
+      "weekStart": ""
+    }
