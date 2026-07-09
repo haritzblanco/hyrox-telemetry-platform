@@ -1,0 +1,986 @@
+{
+  "source": "Pool 3 carreras reales HYROX (BCN 1:07:20, Madrid 1:10:23, IAN 1:01:44), TFM",
+  "description": "Perfil de calibración construido con build_profile_from_fit.py a partir de data/fit-samples/. Biométricas por segundo agrupadas de las 3 carreras; duración media por fase; estaciones con anclas hr_work/hr_floor para la persona de recuperación; rangos de deriva y de capacidad observados.",
+  "total_seconds": 3989,
+  "anchor_hr": 152.7,
+  "cardiac_drift": {
+    "bpm_total": 25.4,
+    "bpm_min": 12.2,
+    "bpm_max": 33.8,
+    "note": "Deriva = HR medio run_8 menos run_1. Rango observado entre las 3 carreras; el atleta muestrea su propia deriva en [bpm_min, bpm_max]."
+  },
+  "ability": {
+    "run_ref_s": 1916,
+    "station_ref_s": 1791,
+    "run_cv": 0.06,
+    "station_cv": 0.048,
+    "note": "Tiempos totales de runs y de estaciones por carrera. run_cv/station_cv = dispersión observada; el simulador la usa para calibrar los ejes carrera/fuerza. Las estaciones varían menos entre sí que los runs."
+  },
+  "course": {
+    "source": "Planeta Híbrido, HYROX Barcelona 2026 (FIRA Hall 04)",
+    "lap_m": 428,
+    "out_to_in_m": 108,
+    "start_to_in_m": 134,
+    "laps_per_run": 2,
+    "total_distance_m": 8700,
+    "run_distances_m": {
+      "run_1": 990,
+      "run_2": 964,
+      "run_3": 964,
+      "run_4": 964,
+      "run_5": 964,
+      "run_6": 964,
+      "run_7": 964,
+      "run_8": 964
+    },
+    "note": "run+roxzone = total_distance_m. roxzone_total = total menos sum(runs), repartida entre fases roxzone proporcional a su duración."
+  },
+  "phases": [
+    {
+      "name": "run_1",
+      "type": "run",
+      "duration_s": 224,
+      "duration_cv": 0.046,
+      "heart_rate": {
+        "mean": 152.7,
+        "std": 21.0,
+        "min": 83,
+        "max": 182,
+        "mean_base": 152.7
+      },
+      "cadence": {
+        "mean": 87.2,
+        "std": 9.5,
+        "min": 0,
+        "max": 94
+      },
+      "power": {
+        "mean": 350.5,
+        "std": 122.2,
+        "min": 0,
+        "max": 638
+      },
+      "speed": {
+        "mean": 3.4,
+        "std": 1.1,
+        "min": 0.0,
+        "max": 5.25
+      }
+    },
+    {
+      "name": "roxzone",
+      "type": "roxzone",
+      "duration_s": 12,
+      "duration_cv": 0.843,
+      "heart_rate": {
+        "mean": 153.5,
+        "std": 6.5,
+        "min": 150,
+        "max": 172,
+        "mean_base": 153.5
+      },
+      "cadence": {
+        "mean": 84.6,
+        "std": 20.3,
+        "min": 0,
+        "max": 92
+      },
+      "power": {
+        "mean": 210.1,
+        "std": 138.2,
+        "min": 0,
+        "max": 531
+      },
+      "speed": {
+        "mean": 2.1,
+        "std": 1.2,
+        "min": 0.0,
+        "max": 4.27
+      }
+    },
+    {
+      "name": "skierg",
+      "type": "station",
+      "duration_s": 263,
+      "duration_cv": 0.036,
+      "heart_rate": {
+        "mean": 129.0,
+        "std": 20.9,
+        "min": 83,
+        "max": 176,
+        "mean_base": 129.0
+      },
+      "cadence": {
+        "mean": 42.2,
+        "std": 49.5,
+        "min": 0,
+        "max": 122
+      },
+      "power": {
+        "mean": 85.6,
+        "std": 123.0,
+        "min": 0,
+        "max": 522
+      },
+      "speed": {
+        "mean": 1.1,
+        "std": 1.4,
+        "min": 0.0,
+        "max": 5.68
+      },
+      "hr_work": 159.0,
+      "hr_floor": 83
+    },
+    {
+      "name": "roxzone",
+      "type": "roxzone",
+      "duration_s": 21,
+      "duration_cv": 0.845,
+      "heart_rate": {
+        "mean": 118.3,
+        "std": 13.0,
+        "min": 84,
+        "max": 139,
+        "mean_base": 118.3
+      },
+      "cadence": {
+        "mean": 80.1,
+        "std": 24.4,
+        "min": 0,
+        "max": 116
+      },
+      "power": {
+        "mean": 268.2,
+        "std": 143.7,
+        "min": 0,
+        "max": 478
+      },
+      "speed": {
+        "mean": 2.7,
+        "std": 1.5,
+        "min": 0.0,
+        "max": 5.38
+      }
+    },
+    {
+      "name": "run_2",
+      "type": "run",
+      "duration_s": 235,
+      "duration_cv": 0.054,
+      "heart_rate": {
+        "mean": 157.3,
+        "std": 20.4,
+        "min": 84,
+        "max": 184,
+        "mean_base": 157.3
+      },
+      "cadence": {
+        "mean": 85.9,
+        "std": 2.2,
+        "min": 83,
+        "max": 91
+      },
+      "power": {
+        "mean": 350.0,
+        "std": 79.1,
+        "min": 178,
+        "max": 709
+      },
+      "speed": {
+        "mean": 3.3,
+        "std": 0.6,
+        "min": 1.82,
+        "max": 5.97
+      }
+    },
+    {
+      "name": "roxzone",
+      "type": "roxzone",
+      "duration_s": 13,
+      "duration_cv": 0.408,
+      "heart_rate": {
+        "mean": 171.2,
+        "std": 11.1,
+        "min": 147,
+        "max": 181,
+        "mean_base": 171.2
+      },
+      "cadence": {
+        "mean": 85.6,
+        "std": 2.2,
+        "min": 82,
+        "max": 89
+      },
+      "power": {
+        "mean": 313.8,
+        "std": 49.4,
+        "min": 236,
+        "max": 459
+      },
+      "speed": {
+        "mean": 3.0,
+        "std": 0.4,
+        "min": 2.18,
+        "max": 4.35
+      }
+    },
+    {
+      "name": "sled_push",
+      "type": "station",
+      "duration_s": 188,
+      "duration_cv": 0.103,
+      "heart_rate": {
+        "mean": 143.8,
+        "std": 20.4,
+        "min": 101,
+        "max": 182,
+        "mean_base": 143.8
+      },
+      "cadence": {
+        "mean": 9.7,
+        "std": 26.3,
+        "min": 0,
+        "max": 102
+      },
+      "power": {
+        "mean": 39.5,
+        "std": 111.9,
+        "min": 0,
+        "max": 486
+      },
+      "speed": {
+        "mean": 1.2,
+        "std": 1.6,
+        "min": 0.0,
+        "max": 5.46
+      },
+      "hr_work": 165.2,
+      "hr_floor": 101
+    },
+    {
+      "name": "roxzone",
+      "type": "roxzone",
+      "duration_s": 19,
+      "duration_cv": 0.827,
+      "heart_rate": {
+        "mean": 117.2,
+        "std": 13.2,
+        "min": 100,
+        "max": 144,
+        "mean_base": 117.2
+      },
+      "cadence": {
+        "mean": 77.8,
+        "std": 21.7,
+        "min": 0,
+        "max": 89
+      },
+      "power": {
+        "mean": 271.1,
+        "std": 111.9,
+        "min": 0,
+        "max": 368
+      },
+      "speed": {
+        "mean": 2.6,
+        "std": 1.1,
+        "min": 0.0,
+        "max": 3.44
+      }
+    },
+    {
+      "name": "run_3",
+      "type": "run",
+      "duration_s": 244,
+      "duration_cv": 0.064,
+      "heart_rate": {
+        "mean": 158.8,
+        "std": 22.5,
+        "min": 119,
+        "max": 188,
+        "mean_base": 158.8
+      },
+      "cadence": {
+        "mean": 85.3,
+        "std": 2.5,
+        "min": 82,
+        "max": 92
+      },
+      "power": {
+        "mean": 336.5,
+        "std": 95.9,
+        "min": 104,
+        "max": 604
+      },
+      "speed": {
+        "mean": 3.2,
+        "std": 0.8,
+        "min": 0.51,
+        "max": 5.11
+      }
+    },
+    {
+      "name": "roxzone",
+      "type": "roxzone",
+      "duration_s": 17,
+      "duration_cv": 0.204,
+      "heart_rate": {
+        "mean": 172.1,
+        "std": 17.8,
+        "min": 140,
+        "max": 183,
+        "mean_base": 172.1
+      },
+      "cadence": {
+        "mean": 80.4,
+        "std": 16.5,
+        "min": 0,
+        "max": 88
+      },
+      "power": {
+        "mean": 299.3,
+        "std": 112.0,
+        "min": 73,
+        "max": 511
+      },
+      "speed": {
+        "mean": 2.8,
+        "std": 0.8,
+        "min": 1.06,
+        "max": 4.0
+      }
+    },
+    {
+      "name": "sled_pull",
+      "type": "station",
+      "duration_s": 229,
+      "duration_cv": 0.011,
+      "heart_rate": {
+        "mean": 147.6,
+        "std": 30.1,
+        "min": 99,
+        "max": 187,
+        "mean_base": 147.6
+      },
+      "cadence": {
+        "mean": 22.2,
+        "std": 33.4,
+        "min": 0,
+        "max": 88
+      },
+      "power": {
+        "mean": 55.4,
+        "std": 102.2,
+        "min": 0,
+        "max": 458
+      },
+      "speed": {
+        "mean": 1.0,
+        "std": 1.4,
+        "min": 0.0,
+        "max": 8.4
+      },
+      "hr_work": 166.3,
+      "hr_floor": 99
+    },
+    {
+      "name": "roxzone",
+      "type": "roxzone",
+      "duration_s": 22,
+      "duration_cv": 0.647,
+      "heart_rate": {
+        "mean": 136.2,
+        "std": 24.1,
+        "min": 106,
+        "max": 186,
+        "mean_base": 136.2
+      },
+      "cadence": {
+        "mean": 84.5,
+        "std": 1.8,
+        "min": 81,
+        "max": 88
+      },
+      "power": {
+        "mean": 304.6,
+        "std": 47.0,
+        "min": 194,
+        "max": 405
+      },
+      "speed": {
+        "mean": 3.0,
+        "std": 0.5,
+        "min": 1.69,
+        "max": 4.12
+      }
+    },
+    {
+      "name": "run_4",
+      "type": "run",
+      "duration_s": 242,
+      "duration_cv": 0.061,
+      "heart_rate": {
+        "mean": 169.9,
+        "std": 17.6,
+        "min": 107,
+        "max": 188,
+        "mean_base": 169.9
+      },
+      "cadence": {
+        "mean": 85.2,
+        "std": 2.4,
+        "min": 82,
+        "max": 90
+      },
+      "power": {
+        "mean": 335.5,
+        "std": 106.2,
+        "min": 128,
+        "max": 732
+      },
+      "speed": {
+        "mean": 3.2,
+        "std": 0.9,
+        "min": 1.14,
+        "max": 6.33
+      }
+    },
+    {
+      "name": "roxzone",
+      "type": "roxzone",
+      "duration_s": 10,
+      "duration_cv": 0.435,
+      "heart_rate": {
+        "mean": 175.8,
+        "std": 7.0,
+        "min": 167,
+        "max": 183,
+        "mean_base": 175.8
+      },
+      "cadence": {
+        "mean": 85.8,
+        "std": 1.6,
+        "min": 83,
+        "max": 88
+      },
+      "power": {
+        "mean": 286.2,
+        "std": 83.2,
+        "min": 150,
+        "max": 421
+      },
+      "speed": {
+        "mean": 2.7,
+        "std": 0.7,
+        "min": 1.44,
+        "max": 3.88
+      }
+    },
+    {
+      "name": "burpee_bj",
+      "type": "station",
+      "duration_s": 198,
+      "duration_cv": 0.109,
+      "heart_rate": {
+        "mean": 149.2,
+        "std": 20.9,
+        "min": 114,
+        "max": 185,
+        "mean_base": 149.2
+      },
+      "cadence": {
+        "mean": 3.1,
+        "std": 15.3,
+        "min": 0,
+        "max": 91
+      },
+      "power": {
+        "mean": 10.6,
+        "std": 56.7,
+        "min": 0,
+        "max": 613
+      },
+      "speed": {
+        "mean": 0.8,
+        "std": 1.8,
+        "min": 0.0,
+        "max": 9.38
+      },
+      "hr_work": 177.0,
+      "hr_floor": 114
+    },
+    {
+      "name": "roxzone",
+      "type": "roxzone",
+      "duration_s": 20,
+      "duration_cv": 0.418,
+      "heart_rate": {
+        "mean": 124.8,
+        "std": 12.5,
+        "min": 111,
+        "max": 148,
+        "mean_base": 124.8
+      },
+      "cadence": {
+        "mean": 55.2,
+        "std": 40.1,
+        "min": 0,
+        "max": 88
+      },
+      "power": {
+        "mean": 180.5,
+        "std": 157.1,
+        "min": 0,
+        "max": 402
+      },
+      "speed": {
+        "mean": 2.0,
+        "std": 1.3,
+        "min": 0.0,
+        "max": 3.82
+      }
+    },
+    {
+      "name": "run_5",
+      "type": "run",
+      "duration_s": 242,
+      "duration_cv": 0.047,
+      "heart_rate": {
+        "mean": 163.5,
+        "std": 19.3,
+        "min": 112,
+        "max": 189,
+        "mean_base": 163.5
+      },
+      "cadence": {
+        "mean": 85.0,
+        "std": 7.4,
+        "min": 0,
+        "max": 90
+      },
+      "power": {
+        "mean": 341.7,
+        "std": 100.4,
+        "min": 0,
+        "max": 698
+      },
+      "speed": {
+        "mean": 3.2,
+        "std": 0.9,
+        "min": 0.0,
+        "max": 6.67
+      }
+    },
+    {
+      "name": "roxzone",
+      "type": "roxzone",
+      "duration_s": 10,
+      "duration_cv": 0.87,
+      "heart_rate": {
+        "mean": 167.8,
+        "std": 7.1,
+        "min": 161,
+        "max": 182,
+        "mean_base": 167.8
+      },
+      "cadence": {
+        "mean": 83.8,
+        "std": 1.4,
+        "min": 83,
+        "max": 88
+      },
+      "power": {
+        "mean": 333.5,
+        "std": 33.5,
+        "min": 232,
+        "max": 361
+      },
+      "speed": {
+        "mean": 3.2,
+        "std": 0.3,
+        "min": 2.42,
+        "max": 3.43
+      }
+    },
+    {
+      "name": "row",
+      "type": "station",
+      "duration_s": 267,
+      "duration_cv": 0.017,
+      "heart_rate": {
+        "mean": 172.9,
+        "std": 7.5,
+        "min": 158,
+        "max": 184,
+        "mean_base": 172.9
+      },
+      "cadence": {
+        "mean": 19.1,
+        "std": 28.3,
+        "min": 0,
+        "max": 87
+      },
+      "power": {
+        "mean": 40.1,
+        "std": 78.1,
+        "min": 0,
+        "max": 360
+      },
+      "speed": {
+        "mean": 0.6,
+        "std": 0.9,
+        "min": 0.0,
+        "max": 5.0
+      },
+      "hr_work": 175.3,
+      "hr_floor": 158
+    },
+    {
+      "name": "roxzone",
+      "type": "roxzone",
+      "duration_s": 31,
+      "duration_cv": 0.228,
+      "heart_rate": {
+        "mean": 182.0,
+        "std": 8.1,
+        "min": 162,
+        "max": 189,
+        "mean_base": 182.0
+      },
+      "cadence": {
+        "mean": 80.9,
+        "std": 17.6,
+        "min": 0,
+        "max": 89
+      },
+      "power": {
+        "mean": 286.1,
+        "std": 84.6,
+        "min": 0,
+        "max": 397
+      },
+      "speed": {
+        "mean": 2.8,
+        "std": 0.8,
+        "min": 0.0,
+        "max": 3.79
+      }
+    },
+    {
+      "name": "run_6",
+      "type": "run",
+      "duration_s": 238,
+      "duration_cv": 0.05,
+      "heart_rate": {
+        "mean": 182.3,
+        "std": 3.5,
+        "min": 175,
+        "max": 189,
+        "mean_base": 182.3
+      },
+      "cadence": {
+        "mean": 85.1,
+        "std": 6.1,
+        "min": 0,
+        "max": 93
+      },
+      "power": {
+        "mean": 338.4,
+        "std": 106.6,
+        "min": 0,
+        "max": 714
+      },
+      "speed": {
+        "mean": 3.2,
+        "std": 0.9,
+        "min": 0.0,
+        "max": 5.87
+      }
+    },
+    {
+      "name": "roxzone",
+      "type": "roxzone",
+      "duration_s": 19,
+      "duration_cv": 0.126,
+      "heart_rate": {
+        "mean": 177.6,
+        "std": 3.9,
+        "min": 168,
+        "max": 183,
+        "mean_base": 177.6
+      },
+      "cadence": {
+        "mean": 68.4,
+        "std": 29.0,
+        "min": 0,
+        "max": 88
+      },
+      "power": {
+        "mean": 242.0,
+        "std": 127.5,
+        "min": 0,
+        "max": 437
+      },
+      "speed": {
+        "mean": 2.4,
+        "std": 1.1,
+        "min": 0.0,
+        "max": 6.65
+      }
+    },
+    {
+      "name": "farmers_carry",
+      "type": "station",
+      "duration_s": 106,
+      "duration_cv": 0.08,
+      "heart_rate": {
+        "mean": 174.3,
+        "std": 6.7,
+        "min": 161,
+        "max": 186,
+        "mean_base": 174.3
+      },
+      "cadence": {
+        "mean": 69.7,
+        "std": 29.5,
+        "min": 0,
+        "max": 90
+      },
+      "power": {
+        "mean": 167.5,
+        "std": 99.5,
+        "min": 0,
+        "max": 857
+      },
+      "speed": {
+        "mean": 1.8,
+        "std": 1.1,
+        "min": 0.0,
+        "max": 8.5
+      },
+      "hr_work": 175.1,
+      "hr_floor": 161
+    },
+    {
+      "name": "roxzone",
+      "type": "roxzone",
+      "duration_s": 37,
+      "duration_cv": 0.112,
+      "heart_rate": {
+        "mean": 173.5,
+        "std": 6.0,
+        "min": 166,
+        "max": 183,
+        "mean_base": 173.5
+      },
+      "cadence": {
+        "mean": 71.0,
+        "std": 30.4,
+        "min": 0,
+        "max": 88
+      },
+      "power": {
+        "mean": 207.7,
+        "std": 119.6,
+        "min": 0,
+        "max": 378
+      },
+      "speed": {
+        "mean": 2.1,
+        "std": 1.1,
+        "min": 0.0,
+        "max": 3.49
+      }
+    },
+    {
+      "name": "run_7",
+      "type": "run",
+      "duration_s": 237,
+      "duration_cv": 0.058,
+      "heart_rate": {
+        "mean": 176.9,
+        "std": 6.6,
+        "min": 166,
+        "max": 187,
+        "mean_base": 176.9
+      },
+      "cadence": {
+        "mean": 85.6,
+        "std": 2.8,
+        "min": 82,
+        "max": 92
+      },
+      "power": {
+        "mean": 323.6,
+        "std": 84.7,
+        "min": 38,
+        "max": 591
+      },
+      "speed": {
+        "mean": 3.1,
+        "std": 0.8,
+        "min": 0.0,
+        "max": 5.4
+      }
+    },
+    {
+      "name": "roxzone",
+      "type": "roxzone",
+      "duration_s": 23,
+      "duration_cv": 0.45,
+      "heart_rate": {
+        "mean": 171.9,
+        "std": 7.6,
+        "min": 163,
+        "max": 182,
+        "mean_base": 171.9
+      },
+      "cadence": {
+        "mean": 74.2,
+        "std": 24.5,
+        "min": 0,
+        "max": 89
+      },
+      "power": {
+        "mean": 331.7,
+        "std": 157.4,
+        "min": 0,
+        "max": 619
+      },
+      "speed": {
+        "mean": 3.4,
+        "std": 0.9,
+        "min": 0.88,
+        "max": 5.08
+      }
+    },
+    {
+      "name": "sandbag_lunges",
+      "type": "station",
+      "duration_s": 213,
+      "duration_cv": 0.01,
+      "heart_rate": {
+        "mean": 172.8,
+        "std": 11.8,
+        "min": 139,
+        "max": 185,
+        "mean_base": 172.8
+      },
+      "cadence": {
+        "mean": 4.1,
+        "std": 14.3,
+        "min": 0,
+        "max": 79
+      },
+      "power": {
+        "mean": 6.5,
+        "std": 28.3,
+        "min": 0,
+        "max": 283
+      },
+      "speed": {
+        "mean": 0.4,
+        "std": 0.8,
+        "min": 0.0,
+        "max": 3.72
+      },
+      "hr_work": 173.4,
+      "hr_floor": 139
+    },
+    {
+      "name": "roxzone",
+      "type": "roxzone",
+      "duration_s": 28,
+      "duration_cv": 0.48,
+      "heart_rate": {
+        "mean": 180.5,
+        "std": 5.9,
+        "min": 168,
+        "max": 188,
+        "mean_base": 180.5
+      },
+      "cadence": {
+        "mean": 63.7,
+        "std": 37.3,
+        "min": 0,
+        "max": 90
+      },
+      "power": {
+        "mean": 249.9,
+        "std": 186.9,
+        "min": 0,
+        "max": 488
+      },
+      "speed": {
+        "mean": 2.5,
+        "std": 1.8,
+        "min": 0.0,
+        "max": 4.82
+      }
+    },
+    {
+      "name": "run_8",
+      "type": "run",
+      "duration_s": 254,
+      "duration_cv": 0.106,
+      "heart_rate": {
+        "mean": 177.6,
+        "std": 5.2,
+        "min": 168,
+        "max": 188,
+        "mean_base": 177.6
+      },
+      "cadence": {
+        "mean": 85.6,
+        "std": 5.6,
+        "min": 0,
+        "max": 93
+      },
+      "power": {
+        "mean": 343.2,
+        "std": 91.8,
+        "min": 95,
+        "max": 579
+      },
+      "speed": {
+        "mean": 3.3,
+        "std": 0.9,
+        "min": 0.0,
+        "max": 4.69
+      }
+    },
+    {
+      "name": "wall_balls",
+      "type": "station",
+      "duration_s": 326,
+      "duration_cv": 0.151,
+      "heart_rate": {
+        "mean": 147.5,
+        "std": 15.7,
+        "min": 121,
+        "max": 183,
+        "mean_base": 147.5
+      },
+      "cadence": {
+        "mean": 23.3,
+        "std": 30.2,
+        "min": 0,
+        "max": 120
+      },
+      "power": {
+        "mean": 73.3,
+        "std": 114.9,
+        "min": 0,
+        "max": 417
+      },
+      "speed": {
+        "mean": 0.9,
+        "std": 1.2,
+        "min": 0.0,
+        "max": 4.24
+      },
+      "hr_work": 173.6,
+      "hr_floor": 121
+    }
+  ]
+}

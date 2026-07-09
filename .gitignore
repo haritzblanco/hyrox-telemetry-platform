@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.coverage
+
+# Node (por si acaso, para tooling)
+node_modules/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secretos y configuración local
+.env
+*.local.yaml
+secrets/
+
+# Resultados pesados o sensibles
+data/fit-samples/*.fit
+experiments/results/*.csv
+!experiments/results/.gitkeep
+
+# Build
+dist/
+build/
+*.egg

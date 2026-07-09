@@ -1,0 +1,28 @@
+[project]
+name = "hyrox-simulator"
+version = "0.1.0"
+description = "Simulador de dispositivos IoT para sesiones Hyrox"
+authors = [{ name = "Haritz Blanco Bello" }]
+requires-python = ">=3.11"
+dependencies = [
+    "paho-mqtt>=2.1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.4",
+]
+
+[project.scripts]
+hyrox-sim = "simulator.main:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"simulator.data" = ["*.json"]
