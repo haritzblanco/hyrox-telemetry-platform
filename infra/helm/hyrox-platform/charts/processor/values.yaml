@@ -1,0 +1,16 @@
+image: hyrox/processor:0.2.0
+shareGroup: processors
+logLevel: INFO
+resources:
+  requests:
+    # 200m es la capacidad nominal medida de una réplica (~195 mCPU
+    # sosteniendo 1.000 msg/s sin pérdida). El HPA escala sobre este request.
+    cpu: 200m
+    memory: 64Mi
+  limits:
+    cpu: 1000m
+    memory: 256Mi
+autoscaling:
+  minReplicas: 1
+  maxReplicas: 4
+  targetCPU: 75

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: processor
+description: Microservicio de procesado (MQTT a InfluxDB)
+type: application
+version: 0.1.0
+appVersion: "0.2.0"

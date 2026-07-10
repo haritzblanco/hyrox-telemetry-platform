@@ -1,0 +1,15 @@
+apiVersion: v2
+name: hyrox-platform
+description: Plataforma de telemetría para eventos Hyrox (broker, procesado, almacenamiento y visualización)
+type: application
+version: 0.1.0
+appVersion: "0.2.0"
+dependencies:
+  - name: mosquitto
+    version: 0.1.0
+  - name: influxdb
+    version: 0.1.0
+  - name: processor
+    version: 0.1.0
+  - name: grafana
+    version: 0.1.0

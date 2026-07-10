@@ -1,0 +1,23 @@
+# Aplicación ArgoCD de la plataforma: reconcilia el chart de infra/helm contra
+# el clúster. Con automated + selfHeal, cualquier cambio committeado en el
+# chart se aplica solo, y cualquier cambio manual en el clúster se revierte.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: hyrox-platform
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/haritzblanco/hyrox-telemetry-platform.git
+    targetRevision: main
+    path: infra/helm/hyrox-platform
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: hyrox
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

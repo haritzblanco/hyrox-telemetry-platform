@@ -1,0 +1,1446 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "gridPos": {
+        "h": 2,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 50,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "### Análisis individual · ${athlete_id}",
+        "mode": "markdown"
+      },
+      "transparent": true,
+      "type": "text"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influxdb-hyrox"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "#f5e003",
+            "mode": "fixed"
+          },
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#f5e003",
+                "value": null
+              }
+            ]
+          },
+          "unit": "dthms"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 5,
+        "x": 0,
+        "y": 2
+      },
+      "id": 1,
+      "options": {
+        "colorMode": "background_solid",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-hyrox"
+          },
+          "query": "from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\"\n    and r._field == \"elapsed_seconds\"\n    and r.athlete_id == \"${athlete_id}\")\n  |> group()\n  |> max()",
+          "refId": "A"
+        }
+      ],
+      "title": "Tiempo total",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influxdb-hyrox"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "#f5e003",
+            "mode": "fixed"
+          },
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#f5e003",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 4,
+        "x": 5,
+        "y": 2
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "background_solid",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-hyrox"
+          },
+          "query": "tiempos = from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\" and r._field == \"elapsed_seconds\")\n  |> group(columns: [\"athlete_id\"])\n  |> max()\n  |> group()\n\nmiTiempo = (tiempos\n  |> filter(fn: (r) => r.athlete_id == \"${athlete_id}\")\n  |> findRecord(fn: (key) => true, idx: 0))._value\n\ntiempos\n  |> filter(fn: (r) => r._value <= miTiempo)\n  |> count()",
+          "refId": "A"
+        }
+      ],
+      "title": "Posición general",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influxdb-hyrox"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "#e0392b",
+            "mode": "fixed"
+          },
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#e0392b",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 4,
+        "x": 9,
+        "y": 2
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "background_solid",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-hyrox"
+          },
+          "query": "from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\"\n    and r._field == \"heart_rate\"\n    and r.athlete_id == \"${athlete_id}\")\n  |> group()\n  |> mean()",
+          "refId": "A"
+        }
+      ],
+      "title": "HR media (bpm)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influxdb-hyrox"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "#e0392b",
+            "mode": "fixed"
+          },
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#e0392b",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 4,
+        "x": 13,
+        "y": 2
+      },
+      "id": 4,
+      "options": {
+        "colorMode": "background_solid",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-hyrox"
+          },
+          "query": "from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\"\n    and r._field == \"heart_rate\"\n    and r.athlete_id == \"${athlete_id}\")\n  |> group()\n  |> max()",
+          "refId": "A"
+        }
+      ],
+      "title": "HR máxima (bpm)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influxdb-hyrox"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#3fb950",
+                "value": null
+              },
+              {
+                "color": "#d4cc1e",
+                "value": 10
+              },
+              {
+                "color": "#e5534b",
+                "value": 20
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 4,
+        "x": 17,
+        "y": 2
+      },
+      "id": 5,
+      "options": {
+        "colorMode": "background_solid",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-hyrox"
+          },
+          "query": "import \"array\"\nbase = from(bucket: \"telemetry\") |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\" and r._field == \"speed\" and r.athlete_id == \"${athlete_id}\" and r.phase_type == \"run\")\n  |> group(columns: [\"phase\"]) |> mean() |> map(fn: (r) => ({phase: r.phase, pace: 1000.0 / r._value}))\np1Arr = (base |> filter(fn: (r) => r.phase == \"run_1\") |> findColumn(fn: (key) => true, column: \"pace\"))\np8Arr = (base |> filter(fn: (r) => r.phase == \"run_8\") |> findColumn(fn: (key) => true, column: \"pace\"))\np1 = if length(arr: p1Arr) > 0 then p1Arr[0] else 0.0\np8 = if length(arr: p8Arr) > 0 then p8Arr[0] else 0.0\narray.from(rows: [{_value: p8 - p1, _time: now()}])",
+          "refId": "A"
+        }
+      ],
+      "title": "Fade Run 1 a 8 (s/km)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influxdb-hyrox"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "#e8e9ed",
+            "mode": "fixed"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#e8e9ed",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 3,
+        "x": 21,
+        "y": 2
+      },
+      "id": 6,
+      "options": {
+        "colorMode": "background_solid",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        },
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-hyrox"
+          },
+          "query": "import \"strings\"\nimport \"math\"\nfrom(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\"\n    and r._field == \"distance\"\n    and r.athlete_id == \"${athlete_id}\")\n  |> group()\n  |> max()\n  |> map(fn: (r) => ({ _value: strings.replace(v: string(v: math.round(x: r._value / 100.0) / 10.0), t: \".\", u: \",\", i: 1) + \" km\" }))",
+          "refId": "A"
+        }
+      ],
+      "title": "Distancia total",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influxdb-hyrox"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 12,
+        "h": 20
+      },
+      "id": 7,
+      "options": {
+        "afterRender": "\n(function(){\n  try{\n    var el=context.element, df=context.dataFrame;\n    el.style.overflow='hidden';\n    if(!df||!df.fields||!df.length){el.innerHTML='<div style=\"color:#888;padding:10px;font-family:Inter,sans-serif\">Sin datos en el rango</div>';return;}\n    var get=function(n){var f=df.fields.find(function(f){return f.name===n});if(!f)return[];var v=f.values;return (v&&v.toArray)?v.toArray():v;};\n    var fmt=function(s){s=Math.round(s);var m=Math.floor(s/60),ss=s%60;return m+':'+(ss<10?'0':'')+ss;};\n    var fa=get('fase'), du=get('dur').map(Number), me=get('me').map(Number);\n    if(!fa.length){el.innerHTML='<div style=\"color:#888;padding:10px\">Sin datos</div>';return;}\n    var order=[],G={};\n    for(var i=0;i<fa.length;i++){var f=fa[i];if(!G[f]){G[f]={d:[],my:null};order.push(f);}G[f].d.push(du[i]);if(me[i]===1)G[f].my=du[i];}\n    var maxMy=0;order.forEach(function(f){var m=G[f].my||0;if(m>maxMy)maxMy=m;});\n    if(maxMy<=0)maxMy=1;\n    order.forEach(function(f){var g=G[f];var my=(g.my==null?0:g.my);g.pos=g.d.filter(function(d){return d<my;}).length+1;});\n    var W=el.clientWidth||900;\n    var H=(el.clientHeight&&el.clientHeight>140)?el.clientHeight:560;\n    var headerH=28, n=order.length;\n    var rowH=Math.max(24,(H-headerH-2)/n), barH=Math.min(rowH-6,42);\n    var posW=54, timeW=62, gapR=14;\n    var rightReg=8+posW+gapR+timeW+12, barArea=Math.max(60, W-rightReg);\n    var fs=Math.max(12, Math.min(18, Math.round(barH*0.55)));\n    var timeR=8+posW+gapR, posR=8;\n    var html='<div style=\"position:relative;height:'+headerH+'px;font-family:Inter,Helvetica,sans-serif\">'+\n      '<span style=\"position:absolute;left:2px;top:2px;color:#fff;font-weight:800;font-size:16px\">Splits</span>'+\n      '<span style=\"position:absolute;right:'+timeR+'px;top:6px;width:'+timeW+'px;text-align:right;color:#9a9a9a;font-size:13px\">Tiempo</span>'+\n      '<span style=\"position:absolute;right:'+posR+'px;top:6px;width:'+posW+'px;text-align:right;color:#9a9a9a;font-size:13px\">Posici&oacute;n</span>'+\n      '</div>';\n    order.forEach(function(f){\n      var g=G[f], my=(g.my==null?0:g.my);\n      var bw=Math.max(8, barArea*(my/maxMy));\n      html+='<div style=\"position:relative;height:'+rowH+'px;font-family:Inter,Helvetica,sans-serif\">'+\n        '<div style=\"position:absolute;left:0;top:'+((rowH-barH)/2).toFixed(1)+'px;height:'+barH+'px;width:'+bw.toFixed(1)+'px;border-radius:9px;background:linear-gradient(90deg,#26260a,#eadf1e);background-size:'+barArea.toFixed(0)+'px 100%;background-repeat:no-repeat\"></div>'+\n        '<span style=\"position:absolute;left:14px;top:0;height:'+rowH+'px;line-height:'+rowH+'px;color:#fff;font-size:'+fs+'px;white-space:nowrap\">'+f+'</span>'+\n        '<span style=\"position:absolute;right:'+timeR+'px;top:0;height:'+rowH+'px;line-height:'+rowH+'px;width:'+timeW+'px;text-align:right;color:#e8e8e8;font-size:15px\">'+fmt(my)+'</span>'+\n        '<span style=\"position:absolute;right:'+posR+'px;top:0;height:'+rowH+'px;line-height:'+rowH+'px;width:'+posW+'px;text-align:right;color:#e8e8e8;font-size:15px\">'+g.pos+'</span>'+\n        '</div>';\n    });\n    el.innerHTML=html;\n  }catch(e){ try{context.element.innerHTML='<pre style=\"color:#f66;padding:8px;white-space:pre-wrap\">'+(e&&e.message)+'</pre>';}catch(_){}}\n})();\n",
+        "content": "",
+        "defaultContent": "Sin datos",
+        "editors": [
+          "afterRender"
+        ],
+        "everyRow": false,
+        "renderMode": "data",
+        "wrap": true,
+        "helpers": "",
+        "styles": "",
+        "contentPartials": [],
+        "externalStyles": [],
+        "externalScripts": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-hyrox"
+          },
+          "query": "sidArr = (from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\" and r._field == \"elapsed_seconds\" and r.athlete_id == \"${athlete_id}\")\n  |> group() |> last()\n  |> findColumn(fn: (key) => true, column: \"session_id\"))\nsid = if length(arr: sidArr) > 0 then sidArr[0] else \"__none__\"\n\nnonrox = from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\" and r._field == \"elapsed_seconds\" and r.session_id == sid and r.phase != \"roxzone\")\n  |> group(columns: [\"athlete_id\", \"phase\"]) |> spread() |> toFloat()\n  |> group() |> keep(columns: [\"athlete_id\", \"phase\", \"_value\"])\n\nrox = from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\" and r._field == \"elapsed_seconds\" and r.session_id == sid and r.phase == \"roxzone\")\n  |> group(columns: [\"athlete_id\"]) |> count() |> toFloat()\n  |> map(fn: (r) => ({athlete_id: r.athlete_id, phase: \"roxzone\", _value: r._value}))\n  |> group() |> keep(columns: [\"athlete_id\", \"phase\", \"_value\"])\n\nunion(tables: [nonrox, rox])\n  |> map(fn: (r) => ({\n      dur: r._value,\n      me: if r.athlete_id == \"${athlete_id}\" then 1 else 0,\n      orden: if r.phase == \"run_1\" then 1 else if r.phase == \"skierg\" then 2 else if r.phase == \"run_2\" then 3 else if r.phase == \"sled_push\" then 4 else if r.phase == \"run_3\" then 5 else if r.phase == \"sled_pull\" then 6 else if r.phase == \"run_4\" then 7 else if r.phase == \"burpee_bj\" then 8 else if r.phase == \"run_5\" then 9 else if r.phase == \"row\" then 10 else if r.phase == \"run_6\" then 11 else if r.phase == \"farmers_carry\" then 12 else if r.phase == \"run_7\" then 13 else if r.phase == \"sandbag_lunges\" then 14 else if r.phase == \"run_8\" then 15 else if r.phase == \"wall_balls\" then 16 else if r.phase == \"roxzone\" then 17 else 99,\n      fase: if r.phase == \"run_1\" then \"Run 1\" else if r.phase == \"skierg\" then \"SkiErg\" else if r.phase == \"run_2\" then \"Run 2\" else if r.phase == \"sled_push\" then \"Sled Push\" else if r.phase == \"run_3\" then \"Run 3\" else if r.phase == \"sled_pull\" then \"Sled Pull\" else if r.phase == \"run_4\" then \"Run 4\" else if r.phase == \"burpee_bj\" then \"Burpee Broad Jump\" else if r.phase == \"run_5\" then \"Run 5\" else if r.phase == \"row\" then \"Row\" else if r.phase == \"run_6\" then \"Run 6\" else if r.phase == \"farmers_carry\" then \"Farmers Carry\" else if r.phase == \"run_7\" then \"Run 7\" else if r.phase == \"sandbag_lunges\" then \"Sandbag Lunges\" else if r.phase == \"run_8\" then \"Run 8\" else if r.phase == \"wall_balls\" then \"Wall Balls\" else if r.phase == \"roxzone\" then \"Roxzone\" else r.phase\n  }))\n  |> filter(fn: (r) => r.orden < 99)\n  |> group()\n  |> keep(columns: [\"fase\", \"orden\", \"dur\", \"me\"])\n  |> sort(columns: [\"orden\"])",
+          "refId": "A"
+        }
+      ],
+      "title": "Splits por fase",
+      "type": "marcusolsson-dynamictext-panel"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influxdb-hyrox"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "#e0392b",
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "gradientMode": "opacity",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 5
+      },
+      "id": 8,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.1.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-hyrox"
+          },
+          "query": "from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\"\n    and r._field == \"heart_rate\"\n    and r.athlete_id == \"${athlete_id}\")\n  |> group()\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)",
+          "refId": "A"
+        }
+      ],
+      "title": "Ritmo cardíaco (bpm)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influxdb-hyrox"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "#f5e003",
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "gradientMode": "opacity",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "watt"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 12
+      },
+      "id": 9,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.1.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-hyrox"
+          },
+          "query": "from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\"\n    and r._field == \"power\"\n    and r.athlete_id == \"${athlete_id}\")\n  |> group()\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)",
+          "refId": "A"
+        }
+      ],
+      "title": "Potencia (W)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influxdb-hyrox"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "#3fb950",
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "gradientMode": "opacity",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "dthms"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 12,
+        "y": 19
+      },
+      "id": 10,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.1.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-hyrox"
+          },
+          "query": "from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\"\n    and r._field == \"speed\"\n    and r.phase_type == \"run\"\n    and r.athlete_id == \"${athlete_id}\")\n  |> group()\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> filter(fn: (r) => r._value > 0.0)\n  |> map(fn: (r) => ({ r with _value: 1000.0 / r._value }))",
+          "refId": "A"
+        }
+      ],
+      "title": "Ritmo (min/km)",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 25,
+        "w": 24,
+        "h": 1
+      },
+      "id": 55,
+      "title": "Análisis por estación · impacto y recuperación",
+      "type": "row",
+      "panels": []
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influxdb-hyrox"
+      },
+      "id": 11,
+      "type": "barchart",
+      "title": "Ritmo por Run vs tu media (+ = más lento)",
+      "gridPos": {
+        "x": 0,
+        "y": 26,
+        "w": 12,
+        "h": 9
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "unit": "s",
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "lento"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#e5534b",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "displayName",
+                "value": "Más lento que tu media"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "rapido"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#3fb950",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "displayName",
+                "value": "Más rápido que tu media"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "barRadius": 0.25,
+        "barWidth": 0.8,
+        "fullHighlight": false,
+        "groupWidth": 0.7,
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "orientation": "auto",
+        "showValue": "never",
+        "stacking": "normal",
+        "text": {
+          "valueSize": 12
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        },
+        "xField": "fase",
+        "xTickLabelRotation": -35,
+        "xTickLabelSpacing": 0
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-hyrox"
+          },
+          "query": "base = from(bucket: \"telemetry\") |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\" and r._field == \"speed\" and r.athlete_id == \"${athlete_id}\" and r.phase_type == \"run\")\n  |> group(columns: [\"phase\"]) |> mean()\n  |> map(fn: (r) => ({phase: r.phase, pace: 1000.0 / r._value}))\nmpArr = (base |> group() |> mean(column: \"pace\") |> findColumn(fn: (key) => true, column: \"pace\"))\nmp = if length(arr: mpArr) > 0 then mpArr[0] else 0.0\nbase\n  |> map(fn: (r) => ({fase: if r.phase==\"run_1\" then \"Run 1\" else if r.phase==\"run_2\" then \"Run 2\" else if r.phase==\"run_3\" then \"Run 3\" else if r.phase==\"run_4\" then \"Run 4\" else if r.phase==\"run_5\" then \"Run 5\" else if r.phase==\"run_6\" then \"Run 6\" else if r.phase==\"run_7\" then \"Run 7\" else if r.phase==\"run_8\" then \"Run 8\" else r.phase, orden: if r.phase==\"run_1\" then 1 else if r.phase==\"run_2\" then 2 else if r.phase==\"run_3\" then 3 else if r.phase==\"run_4\" then 4 else if r.phase==\"run_5\" then 5 else if r.phase==\"run_6\" then 6 else if r.phase==\"run_7\" then 7 else if r.phase==\"run_8\" then 8 else 99,\n       lento: if (r.pace - mp) > 0.0 then r.pace - mp else 0.0,\n       rapido: if (r.pace - mp) < 0.0 then r.pace - mp else 0.0}))\n  |> group() |> sort(columns: [\"orden\"]) |> keep(columns: [\"fase\", \"lento\", \"rapido\"])",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influxdb-hyrox"
+      },
+      "id": 12,
+      "type": "barchart",
+      "title": "Potencia media por estación (W)",
+      "gridPos": {
+        "x": 12,
+        "y": 26,
+        "w": 12,
+        "h": 9
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "#f5e003",
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "unit": "watt",
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "barRadius": 0.25,
+        "barWidth": 0.8,
+        "fullHighlight": false,
+        "groupWidth": 0.7,
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "orientation": "auto",
+        "showValue": "always",
+        "stacking": "none",
+        "text": {
+          "valueSize": 12
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        },
+        "xField": "fase",
+        "xTickLabelRotation": -35,
+        "xTickLabelSpacing": 0
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-hyrox"
+          },
+          "query": "from(bucket: \"telemetry\") |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\" and r._field == \"power\" and r.athlete_id == \"${athlete_id}\" and r.phase_type == \"station\")\n  |> group(columns: [\"phase\"]) |> mean()\n  |> map(fn: (r) => ({_value: r._value, fase: if r.phase==\"skierg\" then \"SkiErg\" else if r.phase==\"sled_push\" then \"Sled Push\" else if r.phase==\"sled_pull\" then \"Sled Pull\" else if r.phase==\"burpee_bj\" then \"Burpee BJ\" else if r.phase==\"row\" then \"Row\" else if r.phase==\"farmers_carry\" then \"Farmers\" else if r.phase==\"sandbag_lunges\" then \"Sandbag\" else if r.phase==\"wall_balls\" then \"Wall Balls\" else r.phase, orden: if r.phase==\"run_1\" then 1 else if r.phase==\"skierg\" then 2 else if r.phase==\"run_2\" then 3 else if r.phase==\"sled_push\" then 4 else if r.phase==\"run_3\" then 5 else if r.phase==\"sled_pull\" then 6 else if r.phase==\"run_4\" then 7 else if r.phase==\"burpee_bj\" then 8 else if r.phase==\"run_5\" then 9 else if r.phase==\"row\" then 10 else if r.phase==\"run_6\" then 11 else if r.phase==\"farmers_carry\" then 12 else if r.phase==\"run_7\" then 13 else if r.phase==\"sandbag_lunges\" then 14 else if r.phase==\"run_8\" then 15 else if r.phase==\"wall_balls\" then 16 else 99}))\n  |> group() |> sort(columns: [\"orden\"]) |> keep(columns: [\"fase\", \"_value\"])",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influxdb-hyrox"
+      },
+      "id": 13,
+      "type": "marcusolsson-dynamictext-panel",
+      "title": "Salida y recuperación por estación",
+      "gridPos": {
+        "x": 0,
+        "y": 35,
+        "w": 12,
+        "h": 10
+      },
+      "options": {
+        "afterRender": "\n(function(){\n try{\n  var el=context.element, df=context.dataFrame; el.style.overflow='hidden';\n  if(!df||!df.fields||!df.length){el.innerHTML='<div style=\"color:#888;padding:10px;font-family:Inter,sans-serif\">Sin datos en el rango</div>';return;}\n  var get=function(n){var f=df.fields.find(function(f){return f.name===n});if(!f)return[];var v=f.values;return (v&&v.toArray)?v.toArray():v;};\n  var PRE={skierg:'SkiErg',sled_push:'Sled Push',sled_pull:'Sled Pull',burpee_bj:'Burpee BJ',row:'Row',farmers_carry:'Farmers',sandbag_lunges:'Sandbag',wall_balls:'Wall Balls'};\n  var ORD={skierg:2,sled_push:4,sled_pull:6,burpee_bj:8,row:10,farmers_carry:12,sandbag_lunges:14,wall_balls:16};\n  var es=get('elapsed_seconds').map(Number), hr=get('heart_rate').map(Number), ph=get('phase'), pt=get('phase_type');\n  var H={};for(var i=0;i<es.length;i++){H[es[i]]=hr[i];}\n  var stg={},order=[];\n  for(var i=0;i<es.length;i++){ if(pt[i]!=='station')continue; var f=ph[i];\n    if(!stg[f]){stg[f]={min:es[i],max:es[i]};order.push(f);} else {if(es[i]<stg[f].min)stg[f].min=es[i]; if(es[i]>stg[f].max)stg[f].max=es[i];} }\n  order=order.filter(function(f){return PRE[f];}).sort(function(a,b){return ORD[a]-ORD[b];});\n  var hrAt=function(t){for(var k=0;k<=4;k++){if(H[t+k]!=null)return H[t+k];if(H[t-k]!=null)return H[t-k];}return null;};\n  var rows=order.map(function(f){\n    var entrada=hrAt(stg[f].min), salida=hrAt(stg[f].max);\n    var h60=hrAt(stg[f].max+60); var hrr=(h60==null)?null:(salida-h60);\n    return {fase:PRE[f],entrada:entrada,salida:salida,rec:hrr};\n  });\n  var html='<table style=\"width:100%;border-collapse:collapse;font-family:Inter,Helvetica,sans-serif;color:#e8e8e8\">'+\n   '<thead><tr style=\"color:#9a9a9a;font-size:12px\">'+\n     '<th style=\"text-align:left;padding:3px 6px\">Estaci&oacute;n</th>'+\n     '<th style=\"text-align:right;padding:3px 6px\">HR entrada</th>'+\n     '<th style=\"text-align:right;padding:3px 6px\">HR salida</th>'+\n     '<th style=\"text-align:right;padding:3px 6px\">&Delta; estaci&oacute;n</th>'+\n     '<th style=\"text-align:right;padding:3px 6px\">Recup. 60s</th></tr></thead><tbody>';\n  rows.forEach(function(r){\n    var dlt=r.salida-r.entrada, dup=(dlt>=0);\n    var dt=(dup?'&#9650; +':'&#9660; ')+Math.round(dlt)+' bpm';\n    var dc=(dup?'#e5534b':'#3fb950'); // sube en estación = rojo (te disparó), baja = verde\n    var neg=(r.rec!=null && r.rec<0);\n    var rt=(r.rec==null)?'&mdash;':((neg?'&#9650; +':'&#9660; ')+Math.abs(Math.round(r.rec))+' bpm');\n    var rc=(r.rec==null)?'#777':(neg?'#e5534b':(r.rec>=18?'#3fb950':(r.rec>=10?'#d4cc1e':'#e5534b')));\n    html+='<tr style=\"border-top:1px solid #ffffff14;font-size:14px\">'+\n      '<td style=\"text-align:left;padding:6px;color:#fff\">'+r.fase+'</td>'+\n      '<td style=\"text-align:right;padding:6px\">'+Math.round(r.entrada)+'</td>'+\n      '<td style=\"text-align:right;padding:6px\">'+Math.round(r.salida)+'</td>'+\n      '<td style=\"text-align:right;padding:6px;color:'+dc+'\">'+dt+'</td>'+\n      '<td style=\"text-align:right;padding:6px;color:'+rc+';font-weight:600\">'+rt+'</td></tr>';\n  });\n  html+='</tbody></table>';\n  el.innerHTML=html;\n }catch(e){ try{context.element.innerHTML='<pre style=\"color:#f66;padding:8px;white-space:pre-wrap\">'+(e&&e.message)+'</pre>';}catch(_){}}\n})();\n",
+        "content": "",
+        "defaultContent": "Sin datos",
+        "editors": [
+          "afterRender"
+        ],
+        "everyRow": false,
+        "renderMode": "data",
+        "wrap": true,
+        "helpers": "",
+        "styles": "",
+        "contentPartials": [],
+        "externalStyles": [],
+        "externalScripts": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-hyrox"
+          },
+          "query": "sidArr = (from(bucket: \"telemetry\") |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\" and r._field == \"elapsed_seconds\" and r.athlete_id == \"${athlete_id}\")\n  |> group() |> last() |> findColumn(fn: (key) => true, column: \"session_id\"))\nsid = if length(arr: sidArr) > 0 then sidArr[0] else \"__none__\"\nfrom(bucket: \"telemetry\") |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\" and r.athlete_id == \"${athlete_id}\" and r.session_id == sid and (r._field == \"heart_rate\" or r._field == \"elapsed_seconds\"))\n  |> pivot(rowKey: [\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> keep(columns: [\"elapsed_seconds\", \"heart_rate\", \"phase\", \"phase_type\"])\n  |> group() |> sort(columns: [\"elapsed_seconds\"])",
+          "refId": "A",
+          "maxDataPoints": 6000
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influxdb-hyrox"
+      },
+      "id": 14,
+      "type": "marcusolsson-dynamictext-panel",
+      "title": "Coste de cada estación (tiempo + impuesto al run)",
+      "gridPos": {
+        "x": 12,
+        "y": 35,
+        "w": 12,
+        "h": 10
+      },
+      "options": {
+        "afterRender": "\n(function(){\n try{\n  var el=context.element, df=context.dataFrame; el.style.overflow='hidden';\n  if(!df||!df.fields||!df.length){el.innerHTML='<div style=\"color:#888;padding:10px;font-family:Inter,sans-serif\">Sin datos en el rango</div>';return;}\n  var get=function(n){var f=df.fields.find(function(f){return f.name===n});if(!f)return[];var v=f.values;return (v&&v.toArray)?v.toArray():v;};\n  var fmt=function(s){s=Math.round(s);var m=Math.floor(s/60),ss=s%60;return m+':'+(ss<10?'0':'')+ss;};\n  var fa=get('fase'),or=get('orden').map(Number),ti=get('tipo'),du=get('dur').map(Number);\n  var runDur={},runs=[];for(var i=0;i<or.length;i++){if(ti[i]==='run'){runDur[or[i]]=du[i];runs.push(du[i]);}}\n  var meanRun=runs.length?runs.reduce(function(a,b){return a+b;},0)/runs.length:0;\n  var st=[];for(var i=0;i<or.length;i++){ if(ti[i]!=='station')continue; var nd=runDur[or[i]+1];\n    var tax=(nd==null||!isFinite(nd))?0:Math.max(0,nd-meanRun); st.push({fase:fa[i],base:du[i],tax:tax,cost:du[i]+tax}); }\n  // orden de carrera (como el resto del dashboard); las barras muestran la magnitud del coste\n  var maxC=Math.max.apply(null,st.map(function(s){return s.cost;}))||1;\n  var W=el.clientWidth||500, H=(el.clientHeight&&el.clientHeight>120)?el.clientHeight:300;\n  var headerH=24,n=st.length,rowH=Math.max(22,(H-headerH-2)/n),barH=Math.min(rowH-8,28);\n  var labelW=104, costW=58, pad=8, barArea=Math.max(40, W-labelW-costW-pad);\n  var html='<div style=\"font-family:Inter,Helvetica,sans-serif\">'+\n    '<div style=\"position:relative;height:'+headerH+'px\">'+\n      '<span style=\"position:absolute;left:2px;top:3px;color:#9a9a9a;font-size:12px\">Estaci&oacute;n</span>'+\n      '<span style=\"position:absolute;left:'+labelW+'px;top:3px;color:#8a8a2a;font-size:11px\">&#9632; tiempo estaci&oacute;n  </span>'+\n      '<span style=\"position:absolute;left:'+(labelW+128)+'px;top:3px;color:#c0392b;font-size:11px\">&#9632; impuesto al run</span>'+\n      '<span style=\"position:absolute;right:6px;top:3px;color:#9a9a9a;font-size:12px\">Coste</span>'+\n    '</div>';\n  st.forEach(function(s){\n    var bw=barArea*(s.cost/maxC), baseW=barArea*(s.base/maxC), taxW=Math.max(0,bw-baseW), top=((rowH-barH)/2).toFixed(1);\n    html+='<div style=\"position:relative;height:'+rowH+'px\">'+\n      '<span style=\"position:absolute;left:2px;top:0;height:'+rowH+'px;line-height:'+rowH+'px;color:#fff;font-size:13px;white-space:nowrap\">'+s.fase+'</span>'+\n      '<div style=\"position:absolute;left:'+labelW+'px;top:'+top+'px;height:'+barH+'px;width:'+baseW.toFixed(1)+'px;background:linear-gradient(90deg,#3a3a08,#cfc41e);border-radius:6px 0 0 6px\"></div>'+\n      (taxW>1?'<div style=\"position:absolute;left:'+(labelW+baseW).toFixed(1)+'px;top:'+top+'px;height:'+barH+'px;width:'+taxW.toFixed(1)+'px;background:#c0392b;border-radius:0 6px 6px 0\"></div>':'')+\n      '<span style=\"position:absolute;right:6px;top:0;height:'+rowH+'px;line-height:'+rowH+'px;color:#e8e8e8;font-size:13px\">'+fmt(s.cost)+'</span>'+\n    '</div>';\n  });\n  html+='</div>';\n  el.innerHTML=html;\n }catch(e){ try{context.element.innerHTML='<pre style=\"color:#f66;padding:8px;white-space:pre-wrap\">'+(e&&e.message)+'</pre>';}catch(_){}}\n})();\n",
+        "content": "",
+        "defaultContent": "Sin datos",
+        "editors": [
+          "afterRender"
+        ],
+        "everyRow": false,
+        "renderMode": "data",
+        "wrap": true,
+        "helpers": "",
+        "styles": "",
+        "contentPartials": [],
+        "externalStyles": [],
+        "externalScripts": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-hyrox"
+          },
+          "query": "from(bucket: \"telemetry\") |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\" and r._field == \"elapsed_seconds\" and r.athlete_id == \"${athlete_id}\" and r.phase != \"roxzone\")\n  |> group(columns: [\"phase\"]) |> spread() |> toFloat()\n  |> map(fn: (r) => ({dur: r._value, orden: if r.phase==\"run_1\" then 1 else if r.phase==\"skierg\" then 2 else if r.phase==\"run_2\" then 3 else if r.phase==\"sled_push\" then 4 else if r.phase==\"run_3\" then 5 else if r.phase==\"sled_pull\" then 6 else if r.phase==\"run_4\" then 7 else if r.phase==\"burpee_bj\" then 8 else if r.phase==\"run_5\" then 9 else if r.phase==\"row\" then 10 else if r.phase==\"run_6\" then 11 else if r.phase==\"farmers_carry\" then 12 else if r.phase==\"run_7\" then 13 else if r.phase==\"sandbag_lunges\" then 14 else if r.phase==\"run_8\" then 15 else if r.phase==\"wall_balls\" then 16 else 99, fase: if r.phase==\"skierg\" then \"SkiErg\" else if r.phase==\"sled_push\" then \"Sled Push\" else if r.phase==\"sled_pull\" then \"Sled Pull\" else if r.phase==\"burpee_bj\" then \"Burpee BJ\" else if r.phase==\"row\" then \"Row\" else if r.phase==\"farmers_carry\" then \"Farmers\" else if r.phase==\"sandbag_lunges\" then \"Sandbag\" else if r.phase==\"wall_balls\" then \"Wall Balls\" else r.phase, tipo: if r.phase==\"run_1\" or r.phase==\"run_2\" or r.phase==\"run_3\" or r.phase==\"run_4\" or r.phase==\"run_5\" or r.phase==\"run_6\" or r.phase==\"run_7\" or r.phase==\"run_8\" then \"run\" else \"station\"}))\n  |> filter(fn: (r) => r.orden < 99)\n  |> group() |> sort(columns: [\"orden\"]) |> keep(columns: [\"fase\", \"orden\", \"tipo\", \"dur\"])",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 45,
+        "w": 24,
+        "h": 1
+      },
+      "id": 60,
+      "title": "Distribución por Estación (tu tiempo vs. la sesión)",
+      "type": "row",
+      "panels": []
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influxdb-hyrox"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 46,
+        "w": 24,
+        "h": 7
+      },
+      "id": 61,
+      "options": {
+        "afterRender": "\n(function(){\n  try {\n    var el = context.element, df = context.dataFrame, LABEL = \"SkiErg\";\n    el.style.overflowX = 'hidden'; el.style.maxWidth = '100%';\n    var fmt=function(s){s=Math.round(s);var m=Math.floor(s/60),ss=s%60;return m+':'+(ss<10?'0':'')+ss;};\n    if (!df || !df.fields || !df.length) { el.innerHTML='<div style=\"color:#888;padding:10px;font-family:Inter,sans-serif\">Sin datos en el rango</div>'; return; }\n    var get=function(n){var f=df.fields.find(function(f){return f.name===n});if(!f)return[];var v=f.values;return (v&&v.toArray)?v.toArray():v;};\n    var durs=get('duracion').map(Number).filter(function(x){return isFinite(x);}), adv=get('adv')[0];\n    var pos=get('pos')[0], tot=get('tot')[0];\n    if(!durs.length){ el.innerHTML='<div style=\"color:#888;padding:10px\">Sin datos</div>'; return; }\n    var tlabel=fmt(adv);\n    var pct=(pos&&tot)?(pos/tot*100):0;\n    var pctTxt=pct<10?Math.round(pct):pct.toFixed(1);\n    var rankLine=(pos&&tot)?('#'+pos+' of '+tot+' &middot; Top '+pctTxt+'%'):'&nbsp;';\n    // --- curva: densidad por KDE gaussiana sobre las duraciones (suave con pocos atletas) ---\n    var W=el.clientWidth||1000, SH=166, pb=22, pt=28, pad=4;\n    var n=durs.length, mean=durs.reduce(function(a,b){return a+b;},0)/n;\n    var sd=Math.sqrt(durs.reduce(function(a,b){return a+(b-mean)*(b-mean);},0)/n)||0;\n    var dmin=Math.min.apply(null,durs), dmax=Math.max.apply(null,durs);\n    // bandwidth PEQUEÑO -> curva afilada/picuda. Con bw pequeño la KDE cae a ~0 (suelo) en\n    // cuanto te alejas de los datos, así que la curva puede recorrer TODO el ancho corriendo\n    // por el suelo donde no hay tiempos (como la app) y solo se abulta donde hay densidad.\n    var bw=Math.max(0.30*sd*Math.pow(n,-0.2), (dmax-dmin)/70, 2);\n    var span=(dmax-dmin)||1;\n    // eje amplio a ambos lados: la curva LLEGA hasta los bordes (por el suelo). No se recorta:\n    // a la izquierda del más rápido la KDE ya es ~0 (no se abulta), no por recorte sino por bw.\n    var xmin=Math.max(0,dmin-span*0.28), xmax=dmax+span*0.28, arng=(xmax-xmin)||1, iw=W-pad*2;\n    var N=180, xs=[], ys=[], ymax=0;\n    for(var i=0;i<=N;i++){var x=xmin+arng*i/N, s=0;\n      for(var j=0;j<n;j++){var u=(x-durs[j])/bw; s+=Math.exp(-0.5*u*u);}\n      xs.push(x); ys.push(s); if(s>ymax)ymax=s;}\n    ymax=ymax||1;\n    var sx=function(x){return pad+(x-xmin)/arng*iw;};\n    var sy=function(y){return pt+(1-y/ymax)*(SH-pt-pb);};\n    var pts=xs.map(function(x,i){return sx(x).toFixed(1)+','+sy(ys[i]).toFixed(1);});\n    var area='M'+sx(xmin).toFixed(1)+','+(SH-pb)+' L'+pts.join(' L')+' L'+sx(xmax).toFixed(1)+','+(SH-pb)+' Z';\n    var ax=sx(adv);\n    var gid='hxg'+Math.floor(Math.random()*1e9);\n    // píldora con el tiempo en la punta de la línea\n    var pillW=tlabel.length*8+14, pillH=20;\n    var pillX=Math.min(Math.max(ax+3, pad), W-pillW-pad), pillY=pt-6;\n    var svg='<svg width=\"100%\" height=\"'+SH+'\" viewBox=\"0 0 '+W+' '+SH+'\" preserveAspectRatio=\"none\" style=\"display:block;max-width:100%\">'+\n      '<defs><linearGradient id=\"'+gid+'\" x1=\"0\" x2=\"0\" y1=\"0\" y2=\"1\">'+\n        '<stop offset=\"0\" stop-color=\"#f2e600\" stop-opacity=\"0.6\"/>'+\n        '<stop offset=\"0.55\" stop-color=\"#cfc400\" stop-opacity=\"0.22\"/>'+\n        '<stop offset=\"1\" stop-color=\"#cfc400\" stop-opacity=\"0\"/></linearGradient></defs>'+\n      '<path d=\"'+area+'\" fill=\"url(#'+gid+')\"/>'+\n      '<polyline points=\"'+pts.join(' ')+'\" fill=\"none\" stroke=\"#ffe600\" stroke-width=\"2.5\" stroke-linejoin=\"round\"/>'+\n      '<line x1=\"'+ax.toFixed(1)+'\" y1=\"'+(SH-pb)+'\" x2=\"'+ax.toFixed(1)+'\" y2=\"'+pt+'\" stroke=\"#ffe600\" stroke-width=\"2\"/>'+\n      '<text x=\"'+(pad+2)+'\" y=\"'+(SH-6)+'\" fill=\"#8a8a8a\" font-size=\"13\" font-family=\"Inter,Helvetica,sans-serif\" text-anchor=\"start\">'+fmt(xmin)+'</text>'+\n      '<text x=\"'+(W-pad-2)+'\" y=\"'+(SH-6)+'\" fill=\"#8a8a8a\" font-size=\"13\" font-family=\"Inter,Helvetica,sans-serif\" text-anchor=\"end\">'+fmt(xmax)+'</text>'+\n      '<rect x=\"'+pillX.toFixed(1)+'\" y=\"'+pillY+'\" width=\"'+pillW+'\" height=\"'+pillH+'\" rx=\"4\" fill=\"#1c1c1c\" fill-opacity=\"0.88\"/>'+\n      '<text x=\"'+(pillX+pillW/2).toFixed(1)+'\" y=\"'+(pillY+14)+'\" fill=\"#fff200\" font-size=\"13\" font-weight=\"700\" text-anchor=\"middle\" font-family=\"Inter,Helvetica,sans-serif\">'+tlabel+'</text>'+\n      '</svg>';\n    // --- header HTML + chart ---\n    el.innerHTML=\n      '<div style=\"font-family:Inter,Helvetica,sans-serif;padding:2px 6px 0\">'+\n        '<div style=\"display:flex;justify-content:space-between;align-items:baseline\">'+\n          '<span style=\"font-size:21px;font-weight:800;color:#fff;letter-spacing:-0.3px\">'+LABEL+'</span>'+\n          '<span style=\"font-size:21px;font-weight:800;color:#fff200\">'+tlabel+'</span>'+\n        '</div>'+\n        '<div style=\"font-size:13px;color:#8a8a8a;margin-top:3px\">'+rankLine+'</div>'+\n      '</div>'+svg;\n  } catch(e){ try{context.element.innerHTML='<pre style=\"color:#f66;padding:8px;white-space:pre-wrap\">'+(e&&e.message)+'</pre>';}catch(_){} }\n})();\n",
+        "content": "",
+        "defaultContent": "Sin datos",
+        "editors": [
+          "afterRender"
+        ],
+        "everyRow": false,
+        "renderMode": "data",
+        "wrap": true,
+        "helpers": "",
+        "styles": "",
+        "contentPartials": [],
+        "externalStyles": [],
+        "externalScripts": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-hyrox"
+          },
+          "query": "import \"math\"\n\nsidArr = (from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\" and r._field == \"elapsed_seconds\" and r.athlete_id == \"${athlete_id}\")\n  |> group() |> last()\n  |> findColumn(fn: (key) => true, column: \"session_id\"))\nsid = if length(arr: sidArr) > 0 then sidArr[0] else \"__none__\"\n\ndurations = from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\" and r._field == \"elapsed_seconds\" and r.phase == \"skierg\" and r.session_id == sid)\n  |> group(columns: [\"athlete_id\"]) |> spread() |> group() |> toFloat()\n\nmnArr = (durations |> min() |> findColumn(fn: (key) => true, column: \"_value\"))\nmxArr = (durations |> max() |> findColumn(fn: (key) => true, column: \"_value\"))\nmn = if length(arr: mnArr) > 0 then mnArr[0] else 0.0\nmx = if length(arr: mxArr) > 0 then mxArr[0] else 0.0\nspan = if mx - mn <= 0.0 then 10.0 else mx - mn\nlo = if mn - span * 0.3 < 0.0 then 0.0 else mn - span * 0.3\nw = ((mx + span * 0.3) - lo) / 40.0\n\nadvArr = (from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\" and r._field == \"elapsed_seconds\" and r.phase == \"skierg\" and r.session_id == sid and r.athlete_id == \"${athlete_id}\")\n  |> group(columns: [\"athlete_id\"]) |> spread() |> group() |> toFloat()\n  |> findColumn(fn: (key) => true, column: \"_value\"))\nadv = if length(arr: advArr) > 0 then advArr[0] else 0.0\n\n// puesto del atleta en la estación = nº de atletas con menor tiempo + 1; tot = total de atletas\nposArr = (durations |> filter(fn: (r) => r._value < adv) |> count() |> findColumn(fn: (key) => true, column: \"_value\"))\npos = if length(arr: posArr) > 0 then posArr[0] else 0\ntotArr = (durations |> count() |> findColumn(fn: (key) => true, column: \"_value\"))\ntot = if length(arr: totArr) > 0 then totArr[0] else 0\n\n// duraciones crudas (1 por atleta) -> la curva (KDE) se calcula en el afterRender\ndurations\n  |> map(fn: (r) => ({duracion: r._value, adv: adv, pos: pos + 1, tot: tot}))",
+          "refId": "A"
+        }
+      ],
+      "title": "",
+      "type": "marcusolsson-dynamictext-panel"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influxdb-hyrox"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 53,
+        "w": 24,
+        "h": 7
+      },
+      "id": 62,
+      "options": {
+        "afterRender": "\n(function(){\n  try {\n    var el = context.element, df = context.dataFrame, LABEL = \"Sled Push\";\n    el.style.overflowX = 'hidden'; el.style.maxWidth = '100%';\n    var fmt=function(s){s=Math.round(s);var m=Math.floor(s/60),ss=s%60;return m+':'+(ss<10?'0':'')+ss;};\n    if (!df || !df.fields || !df.length) { el.innerHTML='<div style=\"color:#888;padding:10px;font-family:Inter,sans-serif\">Sin datos en el rango</div>'; return; }\n    var get=function(n){var f=df.fields.find(function(f){return f.name===n});if(!f)return[];var v=f.values;return (v&&v.toArray)?v.toArray():v;};\n    var durs=get('duracion').map(Number).filter(function(x){return isFinite(x);}), adv=get('adv')[0];\n    var pos=get('pos')[0], tot=get('tot')[0];\n    if(!durs.length){ el.innerHTML='<div style=\"color:#888;padding:10px\">Sin datos</div>'; return; }\n    var tlabel=fmt(adv);\n    var pct=(pos&&tot)?(pos/tot*100):0;\n    var pctTxt=pct<10?Math.round(pct):pct.toFixed(1);\n    var rankLine=(pos&&tot)?('#'+pos+' of '+tot+' &middot; Top '+pctTxt+'%'):'&nbsp;';\n    // --- curva: densidad por KDE gaussiana sobre las duraciones (suave con pocos atletas) ---\n    var W=el.clientWidth||1000, SH=166, pb=22, pt=28, pad=4;\n    var n=durs.length, mean=durs.reduce(function(a,b){return a+b;},0)/n;\n    var sd=Math.sqrt(durs.reduce(function(a,b){return a+(b-mean)*(b-mean);},0)/n)||0;\n    var dmin=Math.min.apply(null,durs), dmax=Math.max.apply(null,durs);\n    // bandwidth PEQUEÑO -> curva afilada/picuda. Con bw pequeño la KDE cae a ~0 (suelo) en\n    // cuanto te alejas de los datos, así que la curva puede recorrer TODO el ancho corriendo\n    // por el suelo donde no hay tiempos (como la app) y solo se abulta donde hay densidad.\n    var bw=Math.max(0.30*sd*Math.pow(n,-0.2), (dmax-dmin)/70, 2);\n    var span=(dmax-dmin)||1;\n    // eje amplio a ambos lados: la curva LLEGA hasta los bordes (por el suelo). No se recorta:\n    // a la izquierda del más rápido la KDE ya es ~0 (no se abulta), no por recorte sino por bw.\n    var xmin=Math.max(0,dmin-span*0.28), xmax=dmax+span*0.28, arng=(xmax-xmin)||1, iw=W-pad*2;\n    var N=180, xs=[], ys=[], ymax=0;\n    for(var i=0;i<=N;i++){var x=xmin+arng*i/N, s=0;\n      for(var j=0;j<n;j++){var u=(x-durs[j])/bw; s+=Math.exp(-0.5*u*u);}\n      xs.push(x); ys.push(s); if(s>ymax)ymax=s;}\n    ymax=ymax||1;\n    var sx=function(x){return pad+(x-xmin)/arng*iw;};\n    var sy=function(y){return pt+(1-y/ymax)*(SH-pt-pb);};\n    var pts=xs.map(function(x,i){return sx(x).toFixed(1)+','+sy(ys[i]).toFixed(1);});\n    var area='M'+sx(xmin).toFixed(1)+','+(SH-pb)+' L'+pts.join(' L')+' L'+sx(xmax).toFixed(1)+','+(SH-pb)+' Z';\n    var ax=sx(adv);\n    var gid='hxg'+Math.floor(Math.random()*1e9);\n    // píldora con el tiempo en la punta de la línea\n    var pillW=tlabel.length*8+14, pillH=20;\n    var pillX=Math.min(Math.max(ax+3, pad), W-pillW-pad), pillY=pt-6;\n    var svg='<svg width=\"100%\" height=\"'+SH+'\" viewBox=\"0 0 '+W+' '+SH+'\" preserveAspectRatio=\"none\" style=\"display:block;max-width:100%\">'+\n      '<defs><linearGradient id=\"'+gid+'\" x1=\"0\" x2=\"0\" y1=\"0\" y2=\"1\">'+\n        '<stop offset=\"0\" stop-color=\"#f2e600\" stop-opacity=\"0.6\"/>'+\n        '<stop offset=\"0.55\" stop-color=\"#cfc400\" stop-opacity=\"0.22\"/>'+\n        '<stop offset=\"1\" stop-color=\"#cfc400\" stop-opacity=\"0\"/></linearGradient></defs>'+\n      '<path d=\"'+area+'\" fill=\"url(#'+gid+')\"/>'+\n      '<polyline points=\"'+pts.join(' ')+'\" fill=\"none\" stroke=\"#ffe600\" stroke-width=\"2.5\" stroke-linejoin=\"round\"/>'+\n      '<line x1=\"'+ax.toFixed(1)+'\" y1=\"'+(SH-pb)+'\" x2=\"'+ax.toFixed(1)+'\" y2=\"'+pt+'\" stroke=\"#ffe600\" stroke-width=\"2\"/>'+\n      '<text x=\"'+(pad+2)+'\" y=\"'+(SH-6)+'\" fill=\"#8a8a8a\" font-size=\"13\" font-family=\"Inter,Helvetica,sans-serif\" text-anchor=\"start\">'+fmt(xmin)+'</text>'+\n      '<text x=\"'+(W-pad-2)+'\" y=\"'+(SH-6)+'\" fill=\"#8a8a8a\" font-size=\"13\" font-family=\"Inter,Helvetica,sans-serif\" text-anchor=\"end\">'+fmt(xmax)+'</text>'+\n      '<rect x=\"'+pillX.toFixed(1)+'\" y=\"'+pillY+'\" width=\"'+pillW+'\" height=\"'+pillH+'\" rx=\"4\" fill=\"#1c1c1c\" fill-opacity=\"0.88\"/>'+\n      '<text x=\"'+(pillX+pillW/2).toFixed(1)+'\" y=\"'+(pillY+14)+'\" fill=\"#fff200\" font-size=\"13\" font-weight=\"700\" text-anchor=\"middle\" font-family=\"Inter,Helvetica,sans-serif\">'+tlabel+'</text>'+\n      '</svg>';\n    // --- header HTML + chart ---\n    el.innerHTML=\n      '<div style=\"font-family:Inter,Helvetica,sans-serif;padding:2px 6px 0\">'+\n        '<div style=\"display:flex;justify-content:space-between;align-items:baseline\">'+\n          '<span style=\"font-size:21px;font-weight:800;color:#fff;letter-spacing:-0.3px\">'+LABEL+'</span>'+\n          '<span style=\"font-size:21px;font-weight:800;color:#fff200\">'+tlabel+'</span>'+\n        '</div>'+\n        '<div style=\"font-size:13px;color:#8a8a8a;margin-top:3px\">'+rankLine+'</div>'+\n      '</div>'+svg;\n  } catch(e){ try{context.element.innerHTML='<pre style=\"color:#f66;padding:8px;white-space:pre-wrap\">'+(e&&e.message)+'</pre>';}catch(_){} }\n})();\n",
+        "content": "",
+        "defaultContent": "Sin datos",
+        "editors": [
+          "afterRender"
+        ],
+        "everyRow": false,
+        "renderMode": "data",
+        "wrap": true,
+        "helpers": "",
+        "styles": "",
+        "contentPartials": [],
+        "externalStyles": [],
+        "externalScripts": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-hyrox"
+          },
+          "query": "import \"math\"\n\nsidArr = (from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\" and r._field == \"elapsed_seconds\" and r.athlete_id == \"${athlete_id}\")\n  |> group() |> last()\n  |> findColumn(fn: (key) => true, column: \"session_id\"))\nsid = if length(arr: sidArr) > 0 then sidArr[0] else \"__none__\"\n\ndurations = from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\" and r._field == \"elapsed_seconds\" and r.phase == \"sled_push\" and r.session_id == sid)\n  |> group(columns: [\"athlete_id\"]) |> spread() |> group() |> toFloat()\n\nmnArr = (durations |> min() |> findColumn(fn: (key) => true, column: \"_value\"))\nmxArr = (durations |> max() |> findColumn(fn: (key) => true, column: \"_value\"))\nmn = if length(arr: mnArr) > 0 then mnArr[0] else 0.0\nmx = if length(arr: mxArr) > 0 then mxArr[0] else 0.0\nspan = if mx - mn <= 0.0 then 10.0 else mx - mn\nlo = if mn - span * 0.3 < 0.0 then 0.0 else mn - span * 0.3\nw = ((mx + span * 0.3) - lo) / 40.0\n\nadvArr = (from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\" and r._field == \"elapsed_seconds\" and r.phase == \"sled_push\" and r.session_id == sid and r.athlete_id == \"${athlete_id}\")\n  |> group(columns: [\"athlete_id\"]) |> spread() |> group() |> toFloat()\n  |> findColumn(fn: (key) => true, column: \"_value\"))\nadv = if length(arr: advArr) > 0 then advArr[0] else 0.0\n\n// puesto del atleta en la estación = nº de atletas con menor tiempo + 1; tot = total de atletas\nposArr = (durations |> filter(fn: (r) => r._value < adv) |> count() |> findColumn(fn: (key) => true, column: \"_value\"))\npos = if length(arr: posArr) > 0 then posArr[0] else 0\ntotArr = (durations |> count() |> findColumn(fn: (key) => true, column: \"_value\"))\ntot = if length(arr: totArr) > 0 then totArr[0] else 0\n\n// duraciones crudas (1 por atleta) -> la curva (KDE) se calcula en el afterRender\ndurations\n  |> map(fn: (r) => ({duracion: r._value, adv: adv, pos: pos + 1, tot: tot}))",
+          "refId": "A"
+        }
+      ],
+      "title": "",
+      "type": "marcusolsson-dynamictext-panel"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influxdb-hyrox"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 60,
+        "w": 24,
+        "h": 7
+      },
+      "id": 63,
+      "options": {
+        "afterRender": "\n(function(){\n  try {\n    var el = context.element, df = context.dataFrame, LABEL = \"Sled Pull\";\n    el.style.overflowX = 'hidden'; el.style.maxWidth = '100%';\n    var fmt=function(s){s=Math.round(s);var m=Math.floor(s/60),ss=s%60;return m+':'+(ss<10?'0':'')+ss;};\n    if (!df || !df.fields || !df.length) { el.innerHTML='<div style=\"color:#888;padding:10px;font-family:Inter,sans-serif\">Sin datos en el rango</div>'; return; }\n    var get=function(n){var f=df.fields.find(function(f){return f.name===n});if(!f)return[];var v=f.values;return (v&&v.toArray)?v.toArray():v;};\n    var durs=get('duracion').map(Number).filter(function(x){return isFinite(x);}), adv=get('adv')[0];\n    var pos=get('pos')[0], tot=get('tot')[0];\n    if(!durs.length){ el.innerHTML='<div style=\"color:#888;padding:10px\">Sin datos</div>'; return; }\n    var tlabel=fmt(adv);\n    var pct=(pos&&tot)?(pos/tot*100):0;\n    var pctTxt=pct<10?Math.round(pct):pct.toFixed(1);\n    var rankLine=(pos&&tot)?('#'+pos+' of '+tot+' &middot; Top '+pctTxt+'%'):'&nbsp;';\n    // --- curva: densidad por KDE gaussiana sobre las duraciones (suave con pocos atletas) ---\n    var W=el.clientWidth||1000, SH=166, pb=22, pt=28, pad=4;\n    var n=durs.length, mean=durs.reduce(function(a,b){return a+b;},0)/n;\n    var sd=Math.sqrt(durs.reduce(function(a,b){return a+(b-mean)*(b-mean);},0)/n)||0;\n    var dmin=Math.min.apply(null,durs), dmax=Math.max.apply(null,durs);\n    // bandwidth PEQUEÑO -> curva afilada/picuda. Con bw pequeño la KDE cae a ~0 (suelo) en\n    // cuanto te alejas de los datos, así que la curva puede recorrer TODO el ancho corriendo\n    // por el suelo donde no hay tiempos (como la app) y solo se abulta donde hay densidad.\n    var bw=Math.max(0.30*sd*Math.pow(n,-0.2), (dmax-dmin)/70, 2);\n    var span=(dmax-dmin)||1;\n    // eje amplio a ambos lados: la curva LLEGA hasta los bordes (por el suelo). No se recorta:\n    // a la izquierda del más rápido la KDE ya es ~0 (no se abulta), no por recorte sino por bw.\n    var xmin=Math.max(0,dmin-span*0.28), xmax=dmax+span*0.28, arng=(xmax-xmin)||1, iw=W-pad*2;\n    var N=180, xs=[], ys=[], ymax=0;\n    for(var i=0;i<=N;i++){var x=xmin+arng*i/N, s=0;\n      for(var j=0;j<n;j++){var u=(x-durs[j])/bw; s+=Math.exp(-0.5*u*u);}\n      xs.push(x); ys.push(s); if(s>ymax)ymax=s;}\n    ymax=ymax||1;\n    var sx=function(x){return pad+(x-xmin)/arng*iw;};\n    var sy=function(y){return pt+(1-y/ymax)*(SH-pt-pb);};\n    var pts=xs.map(function(x,i){return sx(x).toFixed(1)+','+sy(ys[i]).toFixed(1);});\n    var area='M'+sx(xmin).toFixed(1)+','+(SH-pb)+' L'+pts.join(' L')+' L'+sx(xmax).toFixed(1)+','+(SH-pb)+' Z';\n    var ax=sx(adv);\n    var gid='hxg'+Math.floor(Math.random()*1e9);\n    // píldora con el tiempo en la punta de la línea\n    var pillW=tlabel.length*8+14, pillH=20;\n    var pillX=Math.min(Math.max(ax+3, pad), W-pillW-pad), pillY=pt-6;\n    var svg='<svg width=\"100%\" height=\"'+SH+'\" viewBox=\"0 0 '+W+' '+SH+'\" preserveAspectRatio=\"none\" style=\"display:block;max-width:100%\">'+\n      '<defs><linearGradient id=\"'+gid+'\" x1=\"0\" x2=\"0\" y1=\"0\" y2=\"1\">'+\n        '<stop offset=\"0\" stop-color=\"#f2e600\" stop-opacity=\"0.6\"/>'+\n        '<stop offset=\"0.55\" stop-color=\"#cfc400\" stop-opacity=\"0.22\"/>'+\n        '<stop offset=\"1\" stop-color=\"#cfc400\" stop-opacity=\"0\"/></linearGradient></defs>'+\n      '<path d=\"'+area+'\" fill=\"url(#'+gid+')\"/>'+\n      '<polyline points=\"'+pts.join(' ')+'\" fill=\"none\" stroke=\"#ffe600\" stroke-width=\"2.5\" stroke-linejoin=\"round\"/>'+\n      '<line x1=\"'+ax.toFixed(1)+'\" y1=\"'+(SH-pb)+'\" x2=\"'+ax.toFixed(1)+'\" y2=\"'+pt+'\" stroke=\"#ffe600\" stroke-width=\"2\"/>'+\n      '<text x=\"'+(pad+2)+'\" y=\"'+(SH-6)+'\" fill=\"#8a8a8a\" font-size=\"13\" font-family=\"Inter,Helvetica,sans-serif\" text-anchor=\"start\">'+fmt(xmin)+'</text>'+\n      '<text x=\"'+(W-pad-2)+'\" y=\"'+(SH-6)+'\" fill=\"#8a8a8a\" font-size=\"13\" font-family=\"Inter,Helvetica,sans-serif\" text-anchor=\"end\">'+fmt(xmax)+'</text>'+\n      '<rect x=\"'+pillX.toFixed(1)+'\" y=\"'+pillY+'\" width=\"'+pillW+'\" height=\"'+pillH+'\" rx=\"4\" fill=\"#1c1c1c\" fill-opacity=\"0.88\"/>'+\n      '<text x=\"'+(pillX+pillW/2).toFixed(1)+'\" y=\"'+(pillY+14)+'\" fill=\"#fff200\" font-size=\"13\" font-weight=\"700\" text-anchor=\"middle\" font-family=\"Inter,Helvetica,sans-serif\">'+tlabel+'</text>'+\n      '</svg>';\n    // --- header HTML + chart ---\n    el.innerHTML=\n      '<div style=\"font-family:Inter,Helvetica,sans-serif;padding:2px 6px 0\">'+\n        '<div style=\"display:flex;justify-content:space-between;align-items:baseline\">'+\n          '<span style=\"font-size:21px;font-weight:800;color:#fff;letter-spacing:-0.3px\">'+LABEL+'</span>'+\n          '<span style=\"font-size:21px;font-weight:800;color:#fff200\">'+tlabel+'</span>'+\n        '</div>'+\n        '<div style=\"font-size:13px;color:#8a8a8a;margin-top:3px\">'+rankLine+'</div>'+\n      '</div>'+svg;\n  } catch(e){ try{context.element.innerHTML='<pre style=\"color:#f66;padding:8px;white-space:pre-wrap\">'+(e&&e.message)+'</pre>';}catch(_){} }\n})();\n",
+        "content": "",
+        "defaultContent": "Sin datos",
+        "editors": [
+          "afterRender"
+        ],
+        "everyRow": false,
+        "renderMode": "data",
+        "wrap": true,
+        "helpers": "",
+        "styles": "",
+        "contentPartials": [],
+        "externalStyles": [],
+        "externalScripts": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-hyrox"
+          },
+          "query": "import \"math\"\n\nsidArr = (from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\" and r._field == \"elapsed_seconds\" and r.athlete_id == \"${athlete_id}\")\n  |> group() |> last()\n  |> findColumn(fn: (key) => true, column: \"session_id\"))\nsid = if length(arr: sidArr) > 0 then sidArr[0] else \"__none__\"\n\ndurations = from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\" and r._field == \"elapsed_seconds\" and r.phase == \"sled_pull\" and r.session_id == sid)\n  |> group(columns: [\"athlete_id\"]) |> spread() |> group() |> toFloat()\n\nmnArr = (durations |> min() |> findColumn(fn: (key) => true, column: \"_value\"))\nmxArr = (durations |> max() |> findColumn(fn: (key) => true, column: \"_value\"))\nmn = if length(arr: mnArr) > 0 then mnArr[0] else 0.0\nmx = if length(arr: mxArr) > 0 then mxArr[0] else 0.0\nspan = if mx - mn <= 0.0 then 10.0 else mx - mn\nlo = if mn - span * 0.3 < 0.0 then 0.0 else mn - span * 0.3\nw = ((mx + span * 0.3) - lo) / 40.0\n\nadvArr = (from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\" and r._field == \"elapsed_seconds\" and r.phase == \"sled_pull\" and r.session_id == sid and r.athlete_id == \"${athlete_id}\")\n  |> group(columns: [\"athlete_id\"]) |> spread() |> group() |> toFloat()\n  |> findColumn(fn: (key) => true, column: \"_value\"))\nadv = if length(arr: advArr) > 0 then advArr[0] else 0.0\n\n// puesto del atleta en la estación = nº de atletas con menor tiempo + 1; tot = total de atletas\nposArr = (durations |> filter(fn: (r) => r._value < adv) |> count() |> findColumn(fn: (key) => true, column: \"_value\"))\npos = if length(arr: posArr) > 0 then posArr[0] else 0\ntotArr = (durations |> count() |> findColumn(fn: (key) => true, column: \"_value\"))\ntot = if length(arr: totArr) > 0 then totArr[0] else 0\n\n// duraciones crudas (1 por atleta) -> la curva (KDE) se calcula en el afterRender\ndurations\n  |> map(fn: (r) => ({duracion: r._value, adv: adv, pos: pos + 1, tot: tot}))",
+          "refId": "A"
+        }
+      ],
+      "title": "",
+      "type": "marcusolsson-dynamictext-panel"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influxdb-hyrox"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 67,
+        "w": 24,
+        "h": 7
+      },
+      "id": 64,
+      "options": {
+        "afterRender": "\n(function(){\n  try {\n    var el = context.element, df = context.dataFrame, LABEL = \"Burpee Broad Jump\";\n    el.style.overflowX = 'hidden'; el.style.maxWidth = '100%';\n    var fmt=function(s){s=Math.round(s);var m=Math.floor(s/60),ss=s%60;return m+':'+(ss<10?'0':'')+ss;};\n    if (!df || !df.fields || !df.length) { el.innerHTML='<div style=\"color:#888;padding:10px;font-family:Inter,sans-serif\">Sin datos en el rango</div>'; return; }\n    var get=function(n){var f=df.fields.find(function(f){return f.name===n});if(!f)return[];var v=f.values;return (v&&v.toArray)?v.toArray():v;};\n    var durs=get('duracion').map(Number).filter(function(x){return isFinite(x);}), adv=get('adv')[0];\n    var pos=get('pos')[0], tot=get('tot')[0];\n    if(!durs.length){ el.innerHTML='<div style=\"color:#888;padding:10px\">Sin datos</div>'; return; }\n    var tlabel=fmt(adv);\n    var pct=(pos&&tot)?(pos/tot*100):0;\n    var pctTxt=pct<10?Math.round(pct):pct.toFixed(1);\n    var rankLine=(pos&&tot)?('#'+pos+' of '+tot+' &middot; Top '+pctTxt+'%'):'&nbsp;';\n    // --- curva: densidad por KDE gaussiana sobre las duraciones (suave con pocos atletas) ---\n    var W=el.clientWidth||1000, SH=166, pb=22, pt=28, pad=4;\n    var n=durs.length, mean=durs.reduce(function(a,b){return a+b;},0)/n;\n    var sd=Math.sqrt(durs.reduce(function(a,b){return a+(b-mean)*(b-mean);},0)/n)||0;\n    var dmin=Math.min.apply(null,durs), dmax=Math.max.apply(null,durs);\n    // bandwidth PEQUEÑO -> curva afilada/picuda. Con bw pequeño la KDE cae a ~0 (suelo) en\n    // cuanto te alejas de los datos, así que la curva puede recorrer TODO el ancho corriendo\n    // por el suelo donde no hay tiempos (como la app) y solo se abulta donde hay densidad.\n    var bw=Math.max(0.30*sd*Math.pow(n,-0.2), (dmax-dmin)/70, 2);\n    var span=(dmax-dmin)||1;\n    // eje amplio a ambos lados: la curva LLEGA hasta los bordes (por el suelo). No se recorta:\n    // a la izquierda del más rápido la KDE ya es ~0 (no se abulta), no por recorte sino por bw.\n    var xmin=Math.max(0,dmin-span*0.28), xmax=dmax+span*0.28, arng=(xmax-xmin)||1, iw=W-pad*2;\n    var N=180, xs=[], ys=[], ymax=0;\n    for(var i=0;i<=N;i++){var x=xmin+arng*i/N, s=0;\n      for(var j=0;j<n;j++){var u=(x-durs[j])/bw; s+=Math.exp(-0.5*u*u);}\n      xs.push(x); ys.push(s); if(s>ymax)ymax=s;}\n    ymax=ymax||1;\n    var sx=function(x){return pad+(x-xmin)/arng*iw;};\n    var sy=function(y){return pt+(1-y/ymax)*(SH-pt-pb);};\n    var pts=xs.map(function(x,i){return sx(x).toFixed(1)+','+sy(ys[i]).toFixed(1);});\n    var area='M'+sx(xmin).toFixed(1)+','+(SH-pb)+' L'+pts.join(' L')+' L'+sx(xmax).toFixed(1)+','+(SH-pb)+' Z';\n    var ax=sx(adv);\n    var gid='hxg'+Math.floor(Math.random()*1e9);\n    // píldora con el tiempo en la punta de la línea\n    var pillW=tlabel.length*8+14, pillH=20;\n    var pillX=Math.min(Math.max(ax+3, pad), W-pillW-pad), pillY=pt-6;\n    var svg='<svg width=\"100%\" height=\"'+SH+'\" viewBox=\"0 0 '+W+' '+SH+'\" preserveAspectRatio=\"none\" style=\"display:block;max-width:100%\">'+\n      '<defs><linearGradient id=\"'+gid+'\" x1=\"0\" x2=\"0\" y1=\"0\" y2=\"1\">'+\n        '<stop offset=\"0\" stop-color=\"#f2e600\" stop-opacity=\"0.6\"/>'+\n        '<stop offset=\"0.55\" stop-color=\"#cfc400\" stop-opacity=\"0.22\"/>'+\n        '<stop offset=\"1\" stop-color=\"#cfc400\" stop-opacity=\"0\"/></linearGradient></defs>'+\n      '<path d=\"'+area+'\" fill=\"url(#'+gid+')\"/>'+\n      '<polyline points=\"'+pts.join(' ')+'\" fill=\"none\" stroke=\"#ffe600\" stroke-width=\"2.5\" stroke-linejoin=\"round\"/>'+\n      '<line x1=\"'+ax.toFixed(1)+'\" y1=\"'+(SH-pb)+'\" x2=\"'+ax.toFixed(1)+'\" y2=\"'+pt+'\" stroke=\"#ffe600\" stroke-width=\"2\"/>'+\n      '<text x=\"'+(pad+2)+'\" y=\"'+(SH-6)+'\" fill=\"#8a8a8a\" font-size=\"13\" font-family=\"Inter,Helvetica,sans-serif\" text-anchor=\"start\">'+fmt(xmin)+'</text>'+\n      '<text x=\"'+(W-pad-2)+'\" y=\"'+(SH-6)+'\" fill=\"#8a8a8a\" font-size=\"13\" font-family=\"Inter,Helvetica,sans-serif\" text-anchor=\"end\">'+fmt(xmax)+'</text>'+\n      '<rect x=\"'+pillX.toFixed(1)+'\" y=\"'+pillY+'\" width=\"'+pillW+'\" height=\"'+pillH+'\" rx=\"4\" fill=\"#1c1c1c\" fill-opacity=\"0.88\"/>'+\n      '<text x=\"'+(pillX+pillW/2).toFixed(1)+'\" y=\"'+(pillY+14)+'\" fill=\"#fff200\" font-size=\"13\" font-weight=\"700\" text-anchor=\"middle\" font-family=\"Inter,Helvetica,sans-serif\">'+tlabel+'</text>'+\n      '</svg>';\n    // --- header HTML + chart ---\n    el.innerHTML=\n      '<div style=\"font-family:Inter,Helvetica,sans-serif;padding:2px 6px 0\">'+\n        '<div style=\"display:flex;justify-content:space-between;align-items:baseline\">'+\n          '<span style=\"font-size:21px;font-weight:800;color:#fff;letter-spacing:-0.3px\">'+LABEL+'</span>'+\n          '<span style=\"font-size:21px;font-weight:800;color:#fff200\">'+tlabel+'</span>'+\n        '</div>'+\n        '<div style=\"font-size:13px;color:#8a8a8a;margin-top:3px\">'+rankLine+'</div>'+\n      '</div>'+svg;\n  } catch(e){ try{context.element.innerHTML='<pre style=\"color:#f66;padding:8px;white-space:pre-wrap\">'+(e&&e.message)+'</pre>';}catch(_){} }\n})();\n",
+        "content": "",
+        "defaultContent": "Sin datos",
+        "editors": [
+          "afterRender"
+        ],
+        "everyRow": false,
+        "renderMode": "data",
+        "wrap": true,
+        "helpers": "",
+        "styles": "",
+        "contentPartials": [],
+        "externalStyles": [],
+        "externalScripts": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-hyrox"
+          },
+          "query": "import \"math\"\n\nsidArr = (from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\" and r._field == \"elapsed_seconds\" and r.athlete_id == \"${athlete_id}\")\n  |> group() |> last()\n  |> findColumn(fn: (key) => true, column: \"session_id\"))\nsid = if length(arr: sidArr) > 0 then sidArr[0] else \"__none__\"\n\ndurations = from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\" and r._field == \"elapsed_seconds\" and r.phase == \"burpee_bj\" and r.session_id == sid)\n  |> group(columns: [\"athlete_id\"]) |> spread() |> group() |> toFloat()\n\nmnArr = (durations |> min() |> findColumn(fn: (key) => true, column: \"_value\"))\nmxArr = (durations |> max() |> findColumn(fn: (key) => true, column: \"_value\"))\nmn = if length(arr: mnArr) > 0 then mnArr[0] else 0.0\nmx = if length(arr: mxArr) > 0 then mxArr[0] else 0.0\nspan = if mx - mn <= 0.0 then 10.0 else mx - mn\nlo = if mn - span * 0.3 < 0.0 then 0.0 else mn - span * 0.3\nw = ((mx + span * 0.3) - lo) / 40.0\n\nadvArr = (from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\" and r._field == \"elapsed_seconds\" and r.phase == \"burpee_bj\" and r.session_id == sid and r.athlete_id == \"${athlete_id}\")\n  |> group(columns: [\"athlete_id\"]) |> spread() |> group() |> toFloat()\n  |> findColumn(fn: (key) => true, column: \"_value\"))\nadv = if length(arr: advArr) > 0 then advArr[0] else 0.0\n\n// puesto del atleta en la estación = nº de atletas con menor tiempo + 1; tot = total de atletas\nposArr = (durations |> filter(fn: (r) => r._value < adv) |> count() |> findColumn(fn: (key) => true, column: \"_value\"))\npos = if length(arr: posArr) > 0 then posArr[0] else 0\ntotArr = (durations |> count() |> findColumn(fn: (key) => true, column: \"_value\"))\ntot = if length(arr: totArr) > 0 then totArr[0] else 0\n\n// duraciones crudas (1 por atleta) -> la curva (KDE) se calcula en el afterRender\ndurations\n  |> map(fn: (r) => ({duracion: r._value, adv: adv, pos: pos + 1, tot: tot}))",
+          "refId": "A"
+        }
+      ],
+      "title": "",
+      "type": "marcusolsson-dynamictext-panel"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influxdb-hyrox"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 74,
+        "w": 24,
+        "h": 7
+      },
+      "id": 65,
+      "options": {
+        "afterRender": "\n(function(){\n  try {\n    var el = context.element, df = context.dataFrame, LABEL = \"Row\";\n    el.style.overflowX = 'hidden'; el.style.maxWidth = '100%';\n    var fmt=function(s){s=Math.round(s);var m=Math.floor(s/60),ss=s%60;return m+':'+(ss<10?'0':'')+ss;};\n    if (!df || !df.fields || !df.length) { el.innerHTML='<div style=\"color:#888;padding:10px;font-family:Inter,sans-serif\">Sin datos en el rango</div>'; return; }\n    var get=function(n){var f=df.fields.find(function(f){return f.name===n});if(!f)return[];var v=f.values;return (v&&v.toArray)?v.toArray():v;};\n    var durs=get('duracion').map(Number).filter(function(x){return isFinite(x);}), adv=get('adv')[0];\n    var pos=get('pos')[0], tot=get('tot')[0];\n    if(!durs.length){ el.innerHTML='<div style=\"color:#888;padding:10px\">Sin datos</div>'; return; }\n    var tlabel=fmt(adv);\n    var pct=(pos&&tot)?(pos/tot*100):0;\n    var pctTxt=pct<10?Math.round(pct):pct.toFixed(1);\n    var rankLine=(pos&&tot)?('#'+pos+' of '+tot+' &middot; Top '+pctTxt+'%'):'&nbsp;';\n    // --- curva: densidad por KDE gaussiana sobre las duraciones (suave con pocos atletas) ---\n    var W=el.clientWidth||1000, SH=166, pb=22, pt=28, pad=4;\n    var n=durs.length, mean=durs.reduce(function(a,b){return a+b;},0)/n;\n    var sd=Math.sqrt(durs.reduce(function(a,b){return a+(b-mean)*(b-mean);},0)/n)||0;\n    var dmin=Math.min.apply(null,durs), dmax=Math.max.apply(null,durs);\n    // bandwidth PEQUEÑO -> curva afilada/picuda. Con bw pequeño la KDE cae a ~0 (suelo) en\n    // cuanto te alejas de los datos, así que la curva puede recorrer TODO el ancho corriendo\n    // por el suelo donde no hay tiempos (como la app) y solo se abulta donde hay densidad.\n    var bw=Math.max(0.30*sd*Math.pow(n,-0.2), (dmax-dmin)/70, 2);\n    var span=(dmax-dmin)||1;\n    // eje amplio a ambos lados: la curva LLEGA hasta los bordes (por el suelo). No se recorta:\n    // a la izquierda del más rápido la KDE ya es ~0 (no se abulta), no por recorte sino por bw.\n    var xmin=Math.max(0,dmin-span*0.28), xmax=dmax+span*0.28, arng=(xmax-xmin)||1, iw=W-pad*2;\n    var N=180, xs=[], ys=[], ymax=0;\n    for(var i=0;i<=N;i++){var x=xmin+arng*i/N, s=0;\n      for(var j=0;j<n;j++){var u=(x-durs[j])/bw; s+=Math.exp(-0.5*u*u);}\n      xs.push(x); ys.push(s); if(s>ymax)ymax=s;}\n    ymax=ymax||1;\n    var sx=function(x){return pad+(x-xmin)/arng*iw;};\n    var sy=function(y){return pt+(1-y/ymax)*(SH-pt-pb);};\n    var pts=xs.map(function(x,i){return sx(x).toFixed(1)+','+sy(ys[i]).toFixed(1);});\n    var area='M'+sx(xmin).toFixed(1)+','+(SH-pb)+' L'+pts.join(' L')+' L'+sx(xmax).toFixed(1)+','+(SH-pb)+' Z';\n    var ax=sx(adv);\n    var gid='hxg'+Math.floor(Math.random()*1e9);\n    // píldora con el tiempo en la punta de la línea\n    var pillW=tlabel.length*8+14, pillH=20;\n    var pillX=Math.min(Math.max(ax+3, pad), W-pillW-pad), pillY=pt-6;\n    var svg='<svg width=\"100%\" height=\"'+SH+'\" viewBox=\"0 0 '+W+' '+SH+'\" preserveAspectRatio=\"none\" style=\"display:block;max-width:100%\">'+\n      '<defs><linearGradient id=\"'+gid+'\" x1=\"0\" x2=\"0\" y1=\"0\" y2=\"1\">'+\n        '<stop offset=\"0\" stop-color=\"#f2e600\" stop-opacity=\"0.6\"/>'+\n        '<stop offset=\"0.55\" stop-color=\"#cfc400\" stop-opacity=\"0.22\"/>'+\n        '<stop offset=\"1\" stop-color=\"#cfc400\" stop-opacity=\"0\"/></linearGradient></defs>'+\n      '<path d=\"'+area+'\" fill=\"url(#'+gid+')\"/>'+\n      '<polyline points=\"'+pts.join(' ')+'\" fill=\"none\" stroke=\"#ffe600\" stroke-width=\"2.5\" stroke-linejoin=\"round\"/>'+\n      '<line x1=\"'+ax.toFixed(1)+'\" y1=\"'+(SH-pb)+'\" x2=\"'+ax.toFixed(1)+'\" y2=\"'+pt+'\" stroke=\"#ffe600\" stroke-width=\"2\"/>'+\n      '<text x=\"'+(pad+2)+'\" y=\"'+(SH-6)+'\" fill=\"#8a8a8a\" font-size=\"13\" font-family=\"Inter,Helvetica,sans-serif\" text-anchor=\"start\">'+fmt(xmin)+'</text>'+\n      '<text x=\"'+(W-pad-2)+'\" y=\"'+(SH-6)+'\" fill=\"#8a8a8a\" font-size=\"13\" font-family=\"Inter,Helvetica,sans-serif\" text-anchor=\"end\">'+fmt(xmax)+'</text>'+\n      '<rect x=\"'+pillX.toFixed(1)+'\" y=\"'+pillY+'\" width=\"'+pillW+'\" height=\"'+pillH+'\" rx=\"4\" fill=\"#1c1c1c\" fill-opacity=\"0.88\"/>'+\n      '<text x=\"'+(pillX+pillW/2).toFixed(1)+'\" y=\"'+(pillY+14)+'\" fill=\"#fff200\" font-size=\"13\" font-weight=\"700\" text-anchor=\"middle\" font-family=\"Inter,Helvetica,sans-serif\">'+tlabel+'</text>'+\n      '</svg>';\n    // --- header HTML + chart ---\n    el.innerHTML=\n      '<div style=\"font-family:Inter,Helvetica,sans-serif;padding:2px 6px 0\">'+\n        '<div style=\"display:flex;justify-content:space-between;align-items:baseline\">'+\n          '<span style=\"font-size:21px;font-weight:800;color:#fff;letter-spacing:-0.3px\">'+LABEL+'</span>'+\n          '<span style=\"font-size:21px;font-weight:800;color:#fff200\">'+tlabel+'</span>'+\n        '</div>'+\n        '<div style=\"font-size:13px;color:#8a8a8a;margin-top:3px\">'+rankLine+'</div>'+\n      '</div>'+svg;\n  } catch(e){ try{context.element.innerHTML='<pre style=\"color:#f66;padding:8px;white-space:pre-wrap\">'+(e&&e.message)+'</pre>';}catch(_){} }\n})();\n",
+        "content": "",
+        "defaultContent": "Sin datos",
+        "editors": [
+          "afterRender"
+        ],
+        "everyRow": false,
+        "renderMode": "data",
+        "wrap": true,
+        "helpers": "",
+        "styles": "",
+        "contentPartials": [],
+        "externalStyles": [],
+        "externalScripts": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-hyrox"
+          },
+          "query": "import \"math\"\n\nsidArr = (from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\" and r._field == \"elapsed_seconds\" and r.athlete_id == \"${athlete_id}\")\n  |> group() |> last()\n  |> findColumn(fn: (key) => true, column: \"session_id\"))\nsid = if length(arr: sidArr) > 0 then sidArr[0] else \"__none__\"\n\ndurations = from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\" and r._field == \"elapsed_seconds\" and r.phase == \"row\" and r.session_id == sid)\n  |> group(columns: [\"athlete_id\"]) |> spread() |> group() |> toFloat()\n\nmnArr = (durations |> min() |> findColumn(fn: (key) => true, column: \"_value\"))\nmxArr = (durations |> max() |> findColumn(fn: (key) => true, column: \"_value\"))\nmn = if length(arr: mnArr) > 0 then mnArr[0] else 0.0\nmx = if length(arr: mxArr) > 0 then mxArr[0] else 0.0\nspan = if mx - mn <= 0.0 then 10.0 else mx - mn\nlo = if mn - span * 0.3 < 0.0 then 0.0 else mn - span * 0.3\nw = ((mx + span * 0.3) - lo) / 40.0\n\nadvArr = (from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\" and r._field == \"elapsed_seconds\" and r.phase == \"row\" and r.session_id == sid and r.athlete_id == \"${athlete_id}\")\n  |> group(columns: [\"athlete_id\"]) |> spread() |> group() |> toFloat()\n  |> findColumn(fn: (key) => true, column: \"_value\"))\nadv = if length(arr: advArr) > 0 then advArr[0] else 0.0\n\n// puesto del atleta en la estación = nº de atletas con menor tiempo + 1; tot = total de atletas\nposArr = (durations |> filter(fn: (r) => r._value < adv) |> count() |> findColumn(fn: (key) => true, column: \"_value\"))\npos = if length(arr: posArr) > 0 then posArr[0] else 0\ntotArr = (durations |> count() |> findColumn(fn: (key) => true, column: \"_value\"))\ntot = if length(arr: totArr) > 0 then totArr[0] else 0\n\n// duraciones crudas (1 por atleta) -> la curva (KDE) se calcula en el afterRender\ndurations\n  |> map(fn: (r) => ({duracion: r._value, adv: adv, pos: pos + 1, tot: tot}))",
+          "refId": "A"
+        }
+      ],
+      "title": "",
+      "type": "marcusolsson-dynamictext-panel"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influxdb-hyrox"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 81,
+        "w": 24,
+        "h": 7
+      },
+      "id": 66,
+      "options": {
+        "afterRender": "\n(function(){\n  try {\n    var el = context.element, df = context.dataFrame, LABEL = \"Farmers Carry\";\n    el.style.overflowX = 'hidden'; el.style.maxWidth = '100%';\n    var fmt=function(s){s=Math.round(s);var m=Math.floor(s/60),ss=s%60;return m+':'+(ss<10?'0':'')+ss;};\n    if (!df || !df.fields || !df.length) { el.innerHTML='<div style=\"color:#888;padding:10px;font-family:Inter,sans-serif\">Sin datos en el rango</div>'; return; }\n    var get=function(n){var f=df.fields.find(function(f){return f.name===n});if(!f)return[];var v=f.values;return (v&&v.toArray)?v.toArray():v;};\n    var durs=get('duracion').map(Number).filter(function(x){return isFinite(x);}), adv=get('adv')[0];\n    var pos=get('pos')[0], tot=get('tot')[0];\n    if(!durs.length){ el.innerHTML='<div style=\"color:#888;padding:10px\">Sin datos</div>'; return; }\n    var tlabel=fmt(adv);\n    var pct=(pos&&tot)?(pos/tot*100):0;\n    var pctTxt=pct<10?Math.round(pct):pct.toFixed(1);\n    var rankLine=(pos&&tot)?('#'+pos+' of '+tot+' &middot; Top '+pctTxt+'%'):'&nbsp;';\n    // --- curva: densidad por KDE gaussiana sobre las duraciones (suave con pocos atletas) ---\n    var W=el.clientWidth||1000, SH=166, pb=22, pt=28, pad=4;\n    var n=durs.length, mean=durs.reduce(function(a,b){return a+b;},0)/n;\n    var sd=Math.sqrt(durs.reduce(function(a,b){return a+(b-mean)*(b-mean);},0)/n)||0;\n    var dmin=Math.min.apply(null,durs), dmax=Math.max.apply(null,durs);\n    // bandwidth PEQUEÑO -> curva afilada/picuda. Con bw pequeño la KDE cae a ~0 (suelo) en\n    // cuanto te alejas de los datos, así que la curva puede recorrer TODO el ancho corriendo\n    // por el suelo donde no hay tiempos (como la app) y solo se abulta donde hay densidad.\n    var bw=Math.max(0.30*sd*Math.pow(n,-0.2), (dmax-dmin)/70, 2);\n    var span=(dmax-dmin)||1;\n    // eje amplio a ambos lados: la curva LLEGA hasta los bordes (por el suelo). No se recorta:\n    // a la izquierda del más rápido la KDE ya es ~0 (no se abulta), no por recorte sino por bw.\n    var xmin=Math.max(0,dmin-span*0.28), xmax=dmax+span*0.28, arng=(xmax-xmin)||1, iw=W-pad*2;\n    var N=180, xs=[], ys=[], ymax=0;\n    for(var i=0;i<=N;i++){var x=xmin+arng*i/N, s=0;\n      for(var j=0;j<n;j++){var u=(x-durs[j])/bw; s+=Math.exp(-0.5*u*u);}\n      xs.push(x); ys.push(s); if(s>ymax)ymax=s;}\n    ymax=ymax||1;\n    var sx=function(x){return pad+(x-xmin)/arng*iw;};\n    var sy=function(y){return pt+(1-y/ymax)*(SH-pt-pb);};\n    var pts=xs.map(function(x,i){return sx(x).toFixed(1)+','+sy(ys[i]).toFixed(1);});\n    var area='M'+sx(xmin).toFixed(1)+','+(SH-pb)+' L'+pts.join(' L')+' L'+sx(xmax).toFixed(1)+','+(SH-pb)+' Z';\n    var ax=sx(adv);\n    var gid='hxg'+Math.floor(Math.random()*1e9);\n    // píldora con el tiempo en la punta de la línea\n    var pillW=tlabel.length*8+14, pillH=20;\n    var pillX=Math.min(Math.max(ax+3, pad), W-pillW-pad), pillY=pt-6;\n    var svg='<svg width=\"100%\" height=\"'+SH+'\" viewBox=\"0 0 '+W+' '+SH+'\" preserveAspectRatio=\"none\" style=\"display:block;max-width:100%\">'+\n      '<defs><linearGradient id=\"'+gid+'\" x1=\"0\" x2=\"0\" y1=\"0\" y2=\"1\">'+\n        '<stop offset=\"0\" stop-color=\"#f2e600\" stop-opacity=\"0.6\"/>'+\n        '<stop offset=\"0.55\" stop-color=\"#cfc400\" stop-opacity=\"0.22\"/>'+\n        '<stop offset=\"1\" stop-color=\"#cfc400\" stop-opacity=\"0\"/></linearGradient></defs>'+\n      '<path d=\"'+area+'\" fill=\"url(#'+gid+')\"/>'+\n      '<polyline points=\"'+pts.join(' ')+'\" fill=\"none\" stroke=\"#ffe600\" stroke-width=\"2.5\" stroke-linejoin=\"round\"/>'+\n      '<line x1=\"'+ax.toFixed(1)+'\" y1=\"'+(SH-pb)+'\" x2=\"'+ax.toFixed(1)+'\" y2=\"'+pt+'\" stroke=\"#ffe600\" stroke-width=\"2\"/>'+\n      '<text x=\"'+(pad+2)+'\" y=\"'+(SH-6)+'\" fill=\"#8a8a8a\" font-size=\"13\" font-family=\"Inter,Helvetica,sans-serif\" text-anchor=\"start\">'+fmt(xmin)+'</text>'+\n      '<text x=\"'+(W-pad-2)+'\" y=\"'+(SH-6)+'\" fill=\"#8a8a8a\" font-size=\"13\" font-family=\"Inter,Helvetica,sans-serif\" text-anchor=\"end\">'+fmt(xmax)+'</text>'+\n      '<rect x=\"'+pillX.toFixed(1)+'\" y=\"'+pillY+'\" width=\"'+pillW+'\" height=\"'+pillH+'\" rx=\"4\" fill=\"#1c1c1c\" fill-opacity=\"0.88\"/>'+\n      '<text x=\"'+(pillX+pillW/2).toFixed(1)+'\" y=\"'+(pillY+14)+'\" fill=\"#fff200\" font-size=\"13\" font-weight=\"700\" text-anchor=\"middle\" font-family=\"Inter,Helvetica,sans-serif\">'+tlabel+'</text>'+\n      '</svg>';\n    // --- header HTML + chart ---\n    el.innerHTML=\n      '<div style=\"font-family:Inter,Helvetica,sans-serif;padding:2px 6px 0\">'+\n        '<div style=\"display:flex;justify-content:space-between;align-items:baseline\">'+\n          '<span style=\"font-size:21px;font-weight:800;color:#fff;letter-spacing:-0.3px\">'+LABEL+'</span>'+\n          '<span style=\"font-size:21px;font-weight:800;color:#fff200\">'+tlabel+'</span>'+\n        '</div>'+\n        '<div style=\"font-size:13px;color:#8a8a8a;margin-top:3px\">'+rankLine+'</div>'+\n      '</div>'+svg;\n  } catch(e){ try{context.element.innerHTML='<pre style=\"color:#f66;padding:8px;white-space:pre-wrap\">'+(e&&e.message)+'</pre>';}catch(_){} }\n})();\n",
+        "content": "",
+        "defaultContent": "Sin datos",
+        "editors": [
+          "afterRender"
+        ],
+        "everyRow": false,
+        "renderMode": "data",
+        "wrap": true,
+        "helpers": "",
+        "styles": "",
+        "contentPartials": [],
+        "externalStyles": [],
+        "externalScripts": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-hyrox"
+          },
+          "query": "import \"math\"\n\nsidArr = (from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\" and r._field == \"elapsed_seconds\" and r.athlete_id == \"${athlete_id}\")\n  |> group() |> last()\n  |> findColumn(fn: (key) => true, column: \"session_id\"))\nsid = if length(arr: sidArr) > 0 then sidArr[0] else \"__none__\"\n\ndurations = from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\" and r._field == \"elapsed_seconds\" and r.phase == \"farmers_carry\" and r.session_id == sid)\n  |> group(columns: [\"athlete_id\"]) |> spread() |> group() |> toFloat()\n\nmnArr = (durations |> min() |> findColumn(fn: (key) => true, column: \"_value\"))\nmxArr = (durations |> max() |> findColumn(fn: (key) => true, column: \"_value\"))\nmn = if length(arr: mnArr) > 0 then mnArr[0] else 0.0\nmx = if length(arr: mxArr) > 0 then mxArr[0] else 0.0\nspan = if mx - mn <= 0.0 then 10.0 else mx - mn\nlo = if mn - span * 0.3 < 0.0 then 0.0 else mn - span * 0.3\nw = ((mx + span * 0.3) - lo) / 40.0\n\nadvArr = (from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\" and r._field == \"elapsed_seconds\" and r.phase == \"farmers_carry\" and r.session_id == sid and r.athlete_id == \"${athlete_id}\")\n  |> group(columns: [\"athlete_id\"]) |> spread() |> group() |> toFloat()\n  |> findColumn(fn: (key) => true, column: \"_value\"))\nadv = if length(arr: advArr) > 0 then advArr[0] else 0.0\n\n// puesto del atleta en la estación = nº de atletas con menor tiempo + 1; tot = total de atletas\nposArr = (durations |> filter(fn: (r) => r._value < adv) |> count() |> findColumn(fn: (key) => true, column: \"_value\"))\npos = if length(arr: posArr) > 0 then posArr[0] else 0\ntotArr = (durations |> count() |> findColumn(fn: (key) => true, column: \"_value\"))\ntot = if length(arr: totArr) > 0 then totArr[0] else 0\n\n// duraciones crudas (1 por atleta) -> la curva (KDE) se calcula en el afterRender\ndurations\n  |> map(fn: (r) => ({duracion: r._value, adv: adv, pos: pos + 1, tot: tot}))",
+          "refId": "A"
+        }
+      ],
+      "title": "",
+      "type": "marcusolsson-dynamictext-panel"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influxdb-hyrox"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 88,
+        "w": 24,
+        "h": 7
+      },
+      "id": 67,
+      "options": {
+        "afterRender": "\n(function(){\n  try {\n    var el = context.element, df = context.dataFrame, LABEL = \"Sandbag Lunges\";\n    el.style.overflowX = 'hidden'; el.style.maxWidth = '100%';\n    var fmt=function(s){s=Math.round(s);var m=Math.floor(s/60),ss=s%60;return m+':'+(ss<10?'0':'')+ss;};\n    if (!df || !df.fields || !df.length) { el.innerHTML='<div style=\"color:#888;padding:10px;font-family:Inter,sans-serif\">Sin datos en el rango</div>'; return; }\n    var get=function(n){var f=df.fields.find(function(f){return f.name===n});if(!f)return[];var v=f.values;return (v&&v.toArray)?v.toArray():v;};\n    var durs=get('duracion').map(Number).filter(function(x){return isFinite(x);}), adv=get('adv')[0];\n    var pos=get('pos')[0], tot=get('tot')[0];\n    if(!durs.length){ el.innerHTML='<div style=\"color:#888;padding:10px\">Sin datos</div>'; return; }\n    var tlabel=fmt(adv);\n    var pct=(pos&&tot)?(pos/tot*100):0;\n    var pctTxt=pct<10?Math.round(pct):pct.toFixed(1);\n    var rankLine=(pos&&tot)?('#'+pos+' of '+tot+' &middot; Top '+pctTxt+'%'):'&nbsp;';\n    // --- curva: densidad por KDE gaussiana sobre las duraciones (suave con pocos atletas) ---\n    var W=el.clientWidth||1000, SH=166, pb=22, pt=28, pad=4;\n    var n=durs.length, mean=durs.reduce(function(a,b){return a+b;},0)/n;\n    var sd=Math.sqrt(durs.reduce(function(a,b){return a+(b-mean)*(b-mean);},0)/n)||0;\n    var dmin=Math.min.apply(null,durs), dmax=Math.max.apply(null,durs);\n    // bandwidth PEQUEÑO -> curva afilada/picuda. Con bw pequeño la KDE cae a ~0 (suelo) en\n    // cuanto te alejas de los datos, así que la curva puede recorrer TODO el ancho corriendo\n    // por el suelo donde no hay tiempos (como la app) y solo se abulta donde hay densidad.\n    var bw=Math.max(0.30*sd*Math.pow(n,-0.2), (dmax-dmin)/70, 2);\n    var span=(dmax-dmin)||1;\n    // eje amplio a ambos lados: la curva LLEGA hasta los bordes (por el suelo). No se recorta:\n    // a la izquierda del más rápido la KDE ya es ~0 (no se abulta), no por recorte sino por bw.\n    var xmin=Math.max(0,dmin-span*0.28), xmax=dmax+span*0.28, arng=(xmax-xmin)||1, iw=W-pad*2;\n    var N=180, xs=[], ys=[], ymax=0;\n    for(var i=0;i<=N;i++){var x=xmin+arng*i/N, s=0;\n      for(var j=0;j<n;j++){var u=(x-durs[j])/bw; s+=Math.exp(-0.5*u*u);}\n      xs.push(x); ys.push(s); if(s>ymax)ymax=s;}\n    ymax=ymax||1;\n    var sx=function(x){return pad+(x-xmin)/arng*iw;};\n    var sy=function(y){return pt+(1-y/ymax)*(SH-pt-pb);};\n    var pts=xs.map(function(x,i){return sx(x).toFixed(1)+','+sy(ys[i]).toFixed(1);});\n    var area='M'+sx(xmin).toFixed(1)+','+(SH-pb)+' L'+pts.join(' L')+' L'+sx(xmax).toFixed(1)+','+(SH-pb)+' Z';\n    var ax=sx(adv);\n    var gid='hxg'+Math.floor(Math.random()*1e9);\n    // píldora con el tiempo en la punta de la línea\n    var pillW=tlabel.length*8+14, pillH=20;\n    var pillX=Math.min(Math.max(ax+3, pad), W-pillW-pad), pillY=pt-6;\n    var svg='<svg width=\"100%\" height=\"'+SH+'\" viewBox=\"0 0 '+W+' '+SH+'\" preserveAspectRatio=\"none\" style=\"display:block;max-width:100%\">'+\n      '<defs><linearGradient id=\"'+gid+'\" x1=\"0\" x2=\"0\" y1=\"0\" y2=\"1\">'+\n        '<stop offset=\"0\" stop-color=\"#f2e600\" stop-opacity=\"0.6\"/>'+\n        '<stop offset=\"0.55\" stop-color=\"#cfc400\" stop-opacity=\"0.22\"/>'+\n        '<stop offset=\"1\" stop-color=\"#cfc400\" stop-opacity=\"0\"/></linearGradient></defs>'+\n      '<path d=\"'+area+'\" fill=\"url(#'+gid+')\"/>'+\n      '<polyline points=\"'+pts.join(' ')+'\" fill=\"none\" stroke=\"#ffe600\" stroke-width=\"2.5\" stroke-linejoin=\"round\"/>'+\n      '<line x1=\"'+ax.toFixed(1)+'\" y1=\"'+(SH-pb)+'\" x2=\"'+ax.toFixed(1)+'\" y2=\"'+pt+'\" stroke=\"#ffe600\" stroke-width=\"2\"/>'+\n      '<text x=\"'+(pad+2)+'\" y=\"'+(SH-6)+'\" fill=\"#8a8a8a\" font-size=\"13\" font-family=\"Inter,Helvetica,sans-serif\" text-anchor=\"start\">'+fmt(xmin)+'</text>'+\n      '<text x=\"'+(W-pad-2)+'\" y=\"'+(SH-6)+'\" fill=\"#8a8a8a\" font-size=\"13\" font-family=\"Inter,Helvetica,sans-serif\" text-anchor=\"end\">'+fmt(xmax)+'</text>'+\n      '<rect x=\"'+pillX.toFixed(1)+'\" y=\"'+pillY+'\" width=\"'+pillW+'\" height=\"'+pillH+'\" rx=\"4\" fill=\"#1c1c1c\" fill-opacity=\"0.88\"/>'+\n      '<text x=\"'+(pillX+pillW/2).toFixed(1)+'\" y=\"'+(pillY+14)+'\" fill=\"#fff200\" font-size=\"13\" font-weight=\"700\" text-anchor=\"middle\" font-family=\"Inter,Helvetica,sans-serif\">'+tlabel+'</text>'+\n      '</svg>';\n    // --- header HTML + chart ---\n    el.innerHTML=\n      '<div style=\"font-family:Inter,Helvetica,sans-serif;padding:2px 6px 0\">'+\n        '<div style=\"display:flex;justify-content:space-between;align-items:baseline\">'+\n          '<span style=\"font-size:21px;font-weight:800;color:#fff;letter-spacing:-0.3px\">'+LABEL+'</span>'+\n          '<span style=\"font-size:21px;font-weight:800;color:#fff200\">'+tlabel+'</span>'+\n        '</div>'+\n        '<div style=\"font-size:13px;color:#8a8a8a;margin-top:3px\">'+rankLine+'</div>'+\n      '</div>'+svg;\n  } catch(e){ try{context.element.innerHTML='<pre style=\"color:#f66;padding:8px;white-space:pre-wrap\">'+(e&&e.message)+'</pre>';}catch(_){} }\n})();\n",
+        "content": "",
+        "defaultContent": "Sin datos",
+        "editors": [
+          "afterRender"
+        ],
+        "everyRow": false,
+        "renderMode": "data",
+        "wrap": true,
+        "helpers": "",
+        "styles": "",
+        "contentPartials": [],
+        "externalStyles": [],
+        "externalScripts": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-hyrox"
+          },
+          "query": "import \"math\"\n\nsidArr = (from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\" and r._field == \"elapsed_seconds\" and r.athlete_id == \"${athlete_id}\")\n  |> group() |> last()\n  |> findColumn(fn: (key) => true, column: \"session_id\"))\nsid = if length(arr: sidArr) > 0 then sidArr[0] else \"__none__\"\n\ndurations = from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\" and r._field == \"elapsed_seconds\" and r.phase == \"sandbag_lunges\" and r.session_id == sid)\n  |> group(columns: [\"athlete_id\"]) |> spread() |> group() |> toFloat()\n\nmnArr = (durations |> min() |> findColumn(fn: (key) => true, column: \"_value\"))\nmxArr = (durations |> max() |> findColumn(fn: (key) => true, column: \"_value\"))\nmn = if length(arr: mnArr) > 0 then mnArr[0] else 0.0\nmx = if length(arr: mxArr) > 0 then mxArr[0] else 0.0\nspan = if mx - mn <= 0.0 then 10.0 else mx - mn\nlo = if mn - span * 0.3 < 0.0 then 0.0 else mn - span * 0.3\nw = ((mx + span * 0.3) - lo) / 40.0\n\nadvArr = (from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\" and r._field == \"elapsed_seconds\" and r.phase == \"sandbag_lunges\" and r.session_id == sid and r.athlete_id == \"${athlete_id}\")\n  |> group(columns: [\"athlete_id\"]) |> spread() |> group() |> toFloat()\n  |> findColumn(fn: (key) => true, column: \"_value\"))\nadv = if length(arr: advArr) > 0 then advArr[0] else 0.0\n\n// puesto del atleta en la estación = nº de atletas con menor tiempo + 1; tot = total de atletas\nposArr = (durations |> filter(fn: (r) => r._value < adv) |> count() |> findColumn(fn: (key) => true, column: \"_value\"))\npos = if length(arr: posArr) > 0 then posArr[0] else 0\ntotArr = (durations |> count() |> findColumn(fn: (key) => true, column: \"_value\"))\ntot = if length(arr: totArr) > 0 then totArr[0] else 0\n\n// duraciones crudas (1 por atleta) -> la curva (KDE) se calcula en el afterRender\ndurations\n  |> map(fn: (r) => ({duracion: r._value, adv: adv, pos: pos + 1, tot: tot}))",
+          "refId": "A"
+        }
+      ],
+      "title": "",
+      "type": "marcusolsson-dynamictext-panel"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influxdb-hyrox"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 95,
+        "w": 24,
+        "h": 7
+      },
+      "id": 68,
+      "options": {
+        "afterRender": "\n(function(){\n  try {\n    var el = context.element, df = context.dataFrame, LABEL = \"Wall Balls\";\n    el.style.overflowX = 'hidden'; el.style.maxWidth = '100%';\n    var fmt=function(s){s=Math.round(s);var m=Math.floor(s/60),ss=s%60;return m+':'+(ss<10?'0':'')+ss;};\n    if (!df || !df.fields || !df.length) { el.innerHTML='<div style=\"color:#888;padding:10px;font-family:Inter,sans-serif\">Sin datos en el rango</div>'; return; }\n    var get=function(n){var f=df.fields.find(function(f){return f.name===n});if(!f)return[];var v=f.values;return (v&&v.toArray)?v.toArray():v;};\n    var durs=get('duracion').map(Number).filter(function(x){return isFinite(x);}), adv=get('adv')[0];\n    var pos=get('pos')[0], tot=get('tot')[0];\n    if(!durs.length){ el.innerHTML='<div style=\"color:#888;padding:10px\">Sin datos</div>'; return; }\n    var tlabel=fmt(adv);\n    var pct=(pos&&tot)?(pos/tot*100):0;\n    var pctTxt=pct<10?Math.round(pct):pct.toFixed(1);\n    var rankLine=(pos&&tot)?('#'+pos+' of '+tot+' &middot; Top '+pctTxt+'%'):'&nbsp;';\n    // --- curva: densidad por KDE gaussiana sobre las duraciones (suave con pocos atletas) ---\n    var W=el.clientWidth||1000, SH=166, pb=22, pt=28, pad=4;\n    var n=durs.length, mean=durs.reduce(function(a,b){return a+b;},0)/n;\n    var sd=Math.sqrt(durs.reduce(function(a,b){return a+(b-mean)*(b-mean);},0)/n)||0;\n    var dmin=Math.min.apply(null,durs), dmax=Math.max.apply(null,durs);\n    // bandwidth PEQUEÑO -> curva afilada/picuda. Con bw pequeño la KDE cae a ~0 (suelo) en\n    // cuanto te alejas de los datos, así que la curva puede recorrer TODO el ancho corriendo\n    // por el suelo donde no hay tiempos (como la app) y solo se abulta donde hay densidad.\n    var bw=Math.max(0.30*sd*Math.pow(n,-0.2), (dmax-dmin)/70, 2);\n    var span=(dmax-dmin)||1;\n    // eje amplio a ambos lados: la curva LLEGA hasta los bordes (por el suelo). No se recorta:\n    // a la izquierda del más rápido la KDE ya es ~0 (no se abulta), no por recorte sino por bw.\n    var xmin=Math.max(0,dmin-span*0.28), xmax=dmax+span*0.28, arng=(xmax-xmin)||1, iw=W-pad*2;\n    var N=180, xs=[], ys=[], ymax=0;\n    for(var i=0;i<=N;i++){var x=xmin+arng*i/N, s=0;\n      for(var j=0;j<n;j++){var u=(x-durs[j])/bw; s+=Math.exp(-0.5*u*u);}\n      xs.push(x); ys.push(s); if(s>ymax)ymax=s;}\n    ymax=ymax||1;\n    var sx=function(x){return pad+(x-xmin)/arng*iw;};\n    var sy=function(y){return pt+(1-y/ymax)*(SH-pt-pb);};\n    var pts=xs.map(function(x,i){return sx(x).toFixed(1)+','+sy(ys[i]).toFixed(1);});\n    var area='M'+sx(xmin).toFixed(1)+','+(SH-pb)+' L'+pts.join(' L')+' L'+sx(xmax).toFixed(1)+','+(SH-pb)+' Z';\n    var ax=sx(adv);\n    var gid='hxg'+Math.floor(Math.random()*1e9);\n    // píldora con el tiempo en la punta de la línea\n    var pillW=tlabel.length*8+14, pillH=20;\n    var pillX=Math.min(Math.max(ax+3, pad), W-pillW-pad), pillY=pt-6;\n    var svg='<svg width=\"100%\" height=\"'+SH+'\" viewBox=\"0 0 '+W+' '+SH+'\" preserveAspectRatio=\"none\" style=\"display:block;max-width:100%\">'+\n      '<defs><linearGradient id=\"'+gid+'\" x1=\"0\" x2=\"0\" y1=\"0\" y2=\"1\">'+\n        '<stop offset=\"0\" stop-color=\"#f2e600\" stop-opacity=\"0.6\"/>'+\n        '<stop offset=\"0.55\" stop-color=\"#cfc400\" stop-opacity=\"0.22\"/>'+\n        '<stop offset=\"1\" stop-color=\"#cfc400\" stop-opacity=\"0\"/></linearGradient></defs>'+\n      '<path d=\"'+area+'\" fill=\"url(#'+gid+')\"/>'+\n      '<polyline points=\"'+pts.join(' ')+'\" fill=\"none\" stroke=\"#ffe600\" stroke-width=\"2.5\" stroke-linejoin=\"round\"/>'+\n      '<line x1=\"'+ax.toFixed(1)+'\" y1=\"'+(SH-pb)+'\" x2=\"'+ax.toFixed(1)+'\" y2=\"'+pt+'\" stroke=\"#ffe600\" stroke-width=\"2\"/>'+\n      '<text x=\"'+(pad+2)+'\" y=\"'+(SH-6)+'\" fill=\"#8a8a8a\" font-size=\"13\" font-family=\"Inter,Helvetica,sans-serif\" text-anchor=\"start\">'+fmt(xmin)+'</text>'+\n      '<text x=\"'+(W-pad-2)+'\" y=\"'+(SH-6)+'\" fill=\"#8a8a8a\" font-size=\"13\" font-family=\"Inter,Helvetica,sans-serif\" text-anchor=\"end\">'+fmt(xmax)+'</text>'+\n      '<rect x=\"'+pillX.toFixed(1)+'\" y=\"'+pillY+'\" width=\"'+pillW+'\" height=\"'+pillH+'\" rx=\"4\" fill=\"#1c1c1c\" fill-opacity=\"0.88\"/>'+\n      '<text x=\"'+(pillX+pillW/2).toFixed(1)+'\" y=\"'+(pillY+14)+'\" fill=\"#fff200\" font-size=\"13\" font-weight=\"700\" text-anchor=\"middle\" font-family=\"Inter,Helvetica,sans-serif\">'+tlabel+'</text>'+\n      '</svg>';\n    // --- header HTML + chart ---\n    el.innerHTML=\n      '<div style=\"font-family:Inter,Helvetica,sans-serif;padding:2px 6px 0\">'+\n        '<div style=\"display:flex;justify-content:space-between;align-items:baseline\">'+\n          '<span style=\"font-size:21px;font-weight:800;color:#fff;letter-spacing:-0.3px\">'+LABEL+'</span>'+\n          '<span style=\"font-size:21px;font-weight:800;color:#fff200\">'+tlabel+'</span>'+\n        '</div>'+\n        '<div style=\"font-size:13px;color:#8a8a8a;margin-top:3px\">'+rankLine+'</div>'+\n      '</div>'+svg;\n  } catch(e){ try{context.element.innerHTML='<pre style=\"color:#f66;padding:8px;white-space:pre-wrap\">'+(e&&e.message)+'</pre>';}catch(_){} }\n})();\n",
+        "content": "",
+        "defaultContent": "Sin datos",
+        "editors": [
+          "afterRender"
+        ],
+        "everyRow": false,
+        "renderMode": "data",
+        "wrap": true,
+        "helpers": "",
+        "styles": "",
+        "contentPartials": [],
+        "externalStyles": [],
+        "externalScripts": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-hyrox"
+          },
+          "query": "import \"math\"\n\nsidArr = (from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\" and r._field == \"elapsed_seconds\" and r.athlete_id == \"${athlete_id}\")\n  |> group() |> last()\n  |> findColumn(fn: (key) => true, column: \"session_id\"))\nsid = if length(arr: sidArr) > 0 then sidArr[0] else \"__none__\"\n\ndurations = from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\" and r._field == \"elapsed_seconds\" and r.phase == \"wall_balls\" and r.session_id == sid)\n  |> group(columns: [\"athlete_id\"]) |> spread() |> group() |> toFloat()\n\nmnArr = (durations |> min() |> findColumn(fn: (key) => true, column: \"_value\"))\nmxArr = (durations |> max() |> findColumn(fn: (key) => true, column: \"_value\"))\nmn = if length(arr: mnArr) > 0 then mnArr[0] else 0.0\nmx = if length(arr: mxArr) > 0 then mxArr[0] else 0.0\nspan = if mx - mn <= 0.0 then 10.0 else mx - mn\nlo = if mn - span * 0.3 < 0.0 then 0.0 else mn - span * 0.3\nw = ((mx + span * 0.3) - lo) / 40.0\n\nadvArr = (from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\" and r._field == \"elapsed_seconds\" and r.phase == \"wall_balls\" and r.session_id == sid and r.athlete_id == \"${athlete_id}\")\n  |> group(columns: [\"athlete_id\"]) |> spread() |> group() |> toFloat()\n  |> findColumn(fn: (key) => true, column: \"_value\"))\nadv = if length(arr: advArr) > 0 then advArr[0] else 0.0\n\n// puesto del atleta en la estación = nº de atletas con menor tiempo + 1; tot = total de atletas\nposArr = (durations |> filter(fn: (r) => r._value < adv) |> count() |> findColumn(fn: (key) => true, column: \"_value\"))\npos = if length(arr: posArr) > 0 then posArr[0] else 0\ntotArr = (durations |> count() |> findColumn(fn: (key) => true, column: \"_value\"))\ntot = if length(arr: totArr) > 0 then totArr[0] else 0\n\n// duraciones crudas (1 por atleta) -> la curva (KDE) se calcula en el afterRender\ndurations\n  |> map(fn: (r) => ({duracion: r._value, adv: adv, pos: pos + 1, tot: tot}))",
+          "refId": "A"
+        }
+      ],
+      "title": "",
+      "type": "marcusolsson-dynamictext-panel"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "influxdb-hyrox"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 102,
+        "w": 24,
+        "h": 7
+      },
+      "id": 69,
+      "options": {
+        "afterRender": "\n(function(){\n  try {\n    var el = context.element, df = context.dataFrame, LABEL = \"Roxzone\";\n    el.style.overflowX = 'hidden'; el.style.maxWidth = '100%';\n    var fmt=function(s){s=Math.round(s);var m=Math.floor(s/60),ss=s%60;return m+':'+(ss<10?'0':'')+ss;};\n    if (!df || !df.fields || !df.length) { el.innerHTML='<div style=\"color:#888;padding:10px;font-family:Inter,sans-serif\">Sin datos en el rango</div>'; return; }\n    var get=function(n){var f=df.fields.find(function(f){return f.name===n});if(!f)return[];var v=f.values;return (v&&v.toArray)?v.toArray():v;};\n    var durs=get('duracion').map(Number).filter(function(x){return isFinite(x);}), adv=get('adv')[0];\n    var pos=get('pos')[0], tot=get('tot')[0];\n    if(!durs.length){ el.innerHTML='<div style=\"color:#888;padding:10px\">Sin datos</div>'; return; }\n    var tlabel=fmt(adv);\n    var pct=(pos&&tot)?(pos/tot*100):0;\n    var pctTxt=pct<10?Math.round(pct):pct.toFixed(1);\n    var rankLine=(pos&&tot)?('#'+pos+' of '+tot+' &middot; Top '+pctTxt+'%'):'&nbsp;';\n    // --- curva: densidad por KDE gaussiana sobre las duraciones (suave con pocos atletas) ---\n    var W=el.clientWidth||1000, SH=166, pb=22, pt=28, pad=4;\n    var n=durs.length, mean=durs.reduce(function(a,b){return a+b;},0)/n;\n    var sd=Math.sqrt(durs.reduce(function(a,b){return a+(b-mean)*(b-mean);},0)/n)||0;\n    var dmin=Math.min.apply(null,durs), dmax=Math.max.apply(null,durs);\n    // bandwidth PEQUEÑO -> curva afilada/picuda. Con bw pequeño la KDE cae a ~0 (suelo) en\n    // cuanto te alejas de los datos, así que la curva puede recorrer TODO el ancho corriendo\n    // por el suelo donde no hay tiempos (como la app) y solo se abulta donde hay densidad.\n    var bw=Math.max(0.30*sd*Math.pow(n,-0.2), (dmax-dmin)/70, 2);\n    var span=(dmax-dmin)||1;\n    // eje amplio a ambos lados: la curva LLEGA hasta los bordes (por el suelo). No se recorta:\n    // a la izquierda del más rápido la KDE ya es ~0 (no se abulta), no por recorte sino por bw.\n    var xmin=Math.max(0,dmin-span*0.28), xmax=dmax+span*0.28, arng=(xmax-xmin)||1, iw=W-pad*2;\n    var N=180, xs=[], ys=[], ymax=0;\n    for(var i=0;i<=N;i++){var x=xmin+arng*i/N, s=0;\n      for(var j=0;j<n;j++){var u=(x-durs[j])/bw; s+=Math.exp(-0.5*u*u);}\n      xs.push(x); ys.push(s); if(s>ymax)ymax=s;}\n    ymax=ymax||1;\n    var sx=function(x){return pad+(x-xmin)/arng*iw;};\n    var sy=function(y){return pt+(1-y/ymax)*(SH-pt-pb);};\n    var pts=xs.map(function(x,i){return sx(x).toFixed(1)+','+sy(ys[i]).toFixed(1);});\n    var area='M'+sx(xmin).toFixed(1)+','+(SH-pb)+' L'+pts.join(' L')+' L'+sx(xmax).toFixed(1)+','+(SH-pb)+' Z';\n    var ax=sx(adv);\n    var gid='hxg'+Math.floor(Math.random()*1e9);\n    // píldora con el tiempo en la punta de la línea\n    var pillW=tlabel.length*8+14, pillH=20;\n    var pillX=Math.min(Math.max(ax+3, pad), W-pillW-pad), pillY=pt-6;\n    var svg='<svg width=\"100%\" height=\"'+SH+'\" viewBox=\"0 0 '+W+' '+SH+'\" preserveAspectRatio=\"none\" style=\"display:block;max-width:100%\">'+\n      '<defs><linearGradient id=\"'+gid+'\" x1=\"0\" x2=\"0\" y1=\"0\" y2=\"1\">'+\n        '<stop offset=\"0\" stop-color=\"#f2e600\" stop-opacity=\"0.6\"/>'+\n        '<stop offset=\"0.55\" stop-color=\"#cfc400\" stop-opacity=\"0.22\"/>'+\n        '<stop offset=\"1\" stop-color=\"#cfc400\" stop-opacity=\"0\"/></linearGradient></defs>'+\n      '<path d=\"'+area+'\" fill=\"url(#'+gid+')\"/>'+\n      '<polyline points=\"'+pts.join(' ')+'\" fill=\"none\" stroke=\"#ffe600\" stroke-width=\"2.5\" stroke-linejoin=\"round\"/>'+\n      '<line x1=\"'+ax.toFixed(1)+'\" y1=\"'+(SH-pb)+'\" x2=\"'+ax.toFixed(1)+'\" y2=\"'+pt+'\" stroke=\"#ffe600\" stroke-width=\"2\"/>'+\n      '<text x=\"'+(pad+2)+'\" y=\"'+(SH-6)+'\" fill=\"#8a8a8a\" font-size=\"13\" font-family=\"Inter,Helvetica,sans-serif\" text-anchor=\"start\">'+fmt(xmin)+'</text>'+\n      '<text x=\"'+(W-pad-2)+'\" y=\"'+(SH-6)+'\" fill=\"#8a8a8a\" font-size=\"13\" font-family=\"Inter,Helvetica,sans-serif\" text-anchor=\"end\">'+fmt(xmax)+'</text>'+\n      '<rect x=\"'+pillX.toFixed(1)+'\" y=\"'+pillY+'\" width=\"'+pillW+'\" height=\"'+pillH+'\" rx=\"4\" fill=\"#1c1c1c\" fill-opacity=\"0.88\"/>'+\n      '<text x=\"'+(pillX+pillW/2).toFixed(1)+'\" y=\"'+(pillY+14)+'\" fill=\"#fff200\" font-size=\"13\" font-weight=\"700\" text-anchor=\"middle\" font-family=\"Inter,Helvetica,sans-serif\">'+tlabel+'</text>'+\n      '</svg>';\n    // --- header HTML + chart ---\n    el.innerHTML=\n      '<div style=\"font-family:Inter,Helvetica,sans-serif;padding:2px 6px 0\">'+\n        '<div style=\"display:flex;justify-content:space-between;align-items:baseline\">'+\n          '<span style=\"font-size:21px;font-weight:800;color:#fff;letter-spacing:-0.3px\">'+LABEL+'</span>'+\n          '<span style=\"font-size:21px;font-weight:800;color:#fff200\">'+tlabel+'</span>'+\n        '</div>'+\n        '<div style=\"font-size:13px;color:#8a8a8a;margin-top:3px\">'+rankLine+'</div>'+\n      '</div>'+svg;\n  } catch(e){ try{context.element.innerHTML='<pre style=\"color:#f66;padding:8px;white-space:pre-wrap\">'+(e&&e.message)+'</pre>';}catch(_){} }\n})();\n",
+        "content": "",
+        "defaultContent": "Sin datos",
+        "editors": [
+          "afterRender"
+        ],
+        "everyRow": false,
+        "renderMode": "data",
+        "wrap": true,
+        "helpers": "",
+        "styles": "",
+        "contentPartials": [],
+        "externalStyles": [],
+        "externalScripts": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "influxdb-hyrox"
+          },
+          "query": "import \"math\"\n\nsidArr = (from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\" and r._field == \"elapsed_seconds\" and r.athlete_id == \"${athlete_id}\")\n  |> group() |> last()\n  |> findColumn(fn: (key) => true, column: \"session_id\"))\nsid = if length(arr: sidArr) > 0 then sidArr[0] else \"__none__\"\n\ndurations = from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\" and r._field == \"elapsed_seconds\" and r.phase == \"roxzone\" and r.session_id == sid)\n  |> group(columns: [\"athlete_id\"]) |> count() |> group() |> toFloat()\n\nmnArr = (durations |> min() |> findColumn(fn: (key) => true, column: \"_value\"))\nmxArr = (durations |> max() |> findColumn(fn: (key) => true, column: \"_value\"))\nmn = if length(arr: mnArr) > 0 then mnArr[0] else 0.0\nmx = if length(arr: mxArr) > 0 then mxArr[0] else 0.0\nspan = if mx - mn <= 0.0 then 10.0 else mx - mn\nlo = if mn - span * 0.3 < 0.0 then 0.0 else mn - span * 0.3\nw = ((mx + span * 0.3) - lo) / 40.0\n\nadvArr = (from(bucket: \"telemetry\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"biometrics\" and r._field == \"elapsed_seconds\" and r.phase == \"roxzone\" and r.session_id == sid and r.athlete_id == \"${athlete_id}\")\n  |> group(columns: [\"athlete_id\"]) |> count() |> group() |> toFloat()\n  |> findColumn(fn: (key) => true, column: \"_value\"))\nadv = if length(arr: advArr) > 0 then advArr[0] else 0.0\n\n// puesto del atleta en la estación = nº de atletas con menor tiempo + 1; tot = total de atletas\nposArr = (durations |> filter(fn: (r) => r._value < adv) |> count() |> findColumn(fn: (key) => true, column: \"_value\"))\npos = if length(arr: posArr) > 0 then posArr[0] else 0\ntotArr = (durations |> count() |> findColumn(fn: (key) => true, column: \"_value\"))\ntot = if length(arr: totArr) > 0 then totArr[0] else 0\n\n// duraciones crudas (1 por atleta) -> la curva (KDE) se calcula en el afterRender\ndurations\n  |> map(fn: (r) => ({duracion: r._value, adv: adv, pos: pos + 1, tot: tot}))",
+          "refId": "A"
+        }
+      ],
+      "title": "",
+      "type": "marcusolsson-dynamictext-panel"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 41,
+  "tags": [
+    "hyrox"
+  ],
+  "templating": {
+    "list": [
+      {
+        "allValue": "",
+        "current": {
+          "selected": false,
+          "text": "",
+          "value": ""
+        },
+        "datasource": {
+          "type": "influxdb",
+          "uid": "influxdb-hyrox"
+        },
+        "definition": "import \"influxdata/influxdb/schema\"\nschema.tagValues(bucket: \"telemetry\", tag: \"athlete_id\")",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Atleta",
+        "multi": false,
+        "name": "athlete_id",
+        "options": [],
+        "query": "import \"influxdata/influxdb/schema\"\nschema.tagValues(bucket: \"telemetry\", tag: \"athlete_id\")",
+        "refresh": 2,
+        "regex": "",
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-2h",
+    "to": "now"
+  },
+  "timezone": "browser",
+  "title": "Análisis individual",
+  "uid": "hyrox-analysis",
+  "version": 1
+}

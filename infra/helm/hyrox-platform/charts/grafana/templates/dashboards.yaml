@@ -1,0 +1,16 @@
+# Un ConfigMap por dashboard, generado desde los JSON de dashboards/.
+{{- range $path, $file := .Files.Glob "dashboards/*.json" }}
+{{- $name := trimSuffix ".json" (base $path) }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-{{ $name }}
+  labels:
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/part-of: hyrox-platform
+    grafana_dashboard: "1"
+data:
+  {{ base $path }}: |-
+{{ $.Files.Get $path | indent 4 }}
+{{- end }}

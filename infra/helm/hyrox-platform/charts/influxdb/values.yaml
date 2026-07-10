@@ -1,0 +1,20 @@
+image: influxdb:2.7
+# El PVC local-path ata los datos a un nodo concreto; se fija el mismo para
+# que el pod siempre encuentre su volumen.
+nodeName: k3s-hyrox
+service:
+  nodePort: 30086
+storage: 5Gi
+auth:
+  username: admin
+  password: cambiar
+  org: hyrox
+  bucket: telemetry
+  token: cambiar
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 1000m
+    memory: 1Gi

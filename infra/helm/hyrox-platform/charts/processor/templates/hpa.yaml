@@ -1,0 +1,42 @@
+# Dimensionado con la evaluación experimental: una réplica sostiene
+# 1.000 msg/s sin pérdida (~195 mCPU) y el pico observado en carreras HYROX
+# ronda los 800 atletas simultáneos. Con el umbral al 75% la segunda réplica
+# entra hacia los 750 atletas, antes de ese pico.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: processor
+  labels:
+    app.kubernetes.io/name: processor
+    app.kubernetes.io/component: stream-processor
+    app.kubernetes.io/part-of: hyrox-platform
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: processor
+  minReplicas: {{ .Values.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.autoscaling.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.autoscaling.targetCPU }}
+  behavior:
+    scaleUp:
+      # Reacciona rápido a una tanda de salida: puede doblar réplicas cada 30 s.
+      stabilizationWindowSeconds: 0
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 30
+    scaleDown:
+      # Conservador al bajar: espera 3 min de calma para no oscilar con los
+      # valles cortos entre tandas.
+      stabilizationWindowSeconds: 180
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 60

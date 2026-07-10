@@ -1,0 +1,6 @@
+apiVersion: v2
+name: grafana
+description: Visualización (Grafana con dashboards aprovisionados)
+type: application
+version: 0.1.0
+appVersion: "11.1.0"

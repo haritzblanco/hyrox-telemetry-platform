@@ -1,0 +1,19 @@
+image: grafana/grafana:11.1.0
+adminUser: admin
+adminPassword: cambiar
+plugins: marcusolsson-dynamictext-panel
+service:
+  nodePort: 30300
+storage: 1Gi
+influx:
+  url: http://influxdb:8086
+  org: hyrox
+  bucket: telemetry
+  token: cambiar
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
