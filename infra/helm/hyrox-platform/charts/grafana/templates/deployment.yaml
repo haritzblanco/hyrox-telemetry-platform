@@ -8,6 +8,8 @@ metadata:
     app.kubernetes.io/part-of: hyrox-platform
 spec:
   replicas: 1
+  strategy:
+    type: Recreate # el volumen guarda un sqlite: no puede haber dos pods sobre él
   selector:
     matchLabels:
       app.kubernetes.io/name: grafana
@@ -21,6 +23,10 @@ spec:
         # Redespliega si cambian los dashboards aprovisionados.
         checksum/dashboards: {{ include (print $.Template.BasePath "/dashboards.yaml") . | sha256sum }}
     spec:
+      # Junto a la base de datos que consulta, en el plano de control; su
+      # volumen local-path queda anclado a ese nodo desde el primer arranque.
+      nodeSelector:
+        kubernetes.io/hostname: {{ .Values.nodeName }}
       containers:
         - name: grafana
           image: {{ .Values.image }}

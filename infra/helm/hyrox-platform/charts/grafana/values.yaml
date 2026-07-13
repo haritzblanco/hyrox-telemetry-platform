@@ -1,4 +1,5 @@
 image: grafana/grafana:11.1.0
+nodeName: k3s-hyrox
 adminUser: admin
 adminPassword: cambiar
 plugins: marcusolsson-dynamictext-panel
