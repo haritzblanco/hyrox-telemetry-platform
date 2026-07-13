@@ -1,10 +1,13 @@
 image: eclipse-mosquitto:2.0.18
 service:
   nodePort: 31883
+# El broker es el punto de paso de todo el tráfico: un límite de CPU corto lo
+# convierte en el cuello de botella global (500m lo estrangulaba a ~800 msg/s
+# en la evaluación). Request moderado para el scheduler y techo holgado.
 resources:
   requests:
-    cpu: 50m
+    cpu: 200m
     memory: 64Mi
   limits:
-    cpu: 500m
+    cpu: 1500m
     memory: 256Mi

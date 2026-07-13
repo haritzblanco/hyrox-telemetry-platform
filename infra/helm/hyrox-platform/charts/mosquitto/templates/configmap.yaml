@@ -26,3 +26,9 @@ data:
     log_type information
 
     max_connections -1
+
+    # Cola por suscriptor QoS 1/2 (defecto 1000): con picos de carga por encima
+    # del caudal del procesador, una cola corta convierte el pico en descarte;
+    # con 10000 (~3 MB) lo convierte en latencia recuperable. Dimensionado con
+    # la evaluación experimental (cap. 8).
+    max_queued_messages 10000
