@@ -1,0 +1,86 @@
+# Deployment del procesador para la EVALUACIÓN EXPERIMENTAL.
+#
+# Idéntico al de producción salvo:
+#   - imagen instrumentada hyrox/processor:0.4.0 (métricas de latencia/throughput),
+#   - --metrics-interval 2 → emite una línea JSON de métricas cada 2 s por stdout,
+#   - --log-level WARNING → silencia el log de progreso para no ensuciar kubectl logs
+#     (las líneas de métricas se imprimen con print, no por el logger).
+#
+# La colocación replica la de producción: réplicas en los nodos de cómputo
+# (node-role=compute) con anti-afinidad preferida entre sí, de modo que 2 réplicas
+# caen una por worker y el escalado añade CPU real en vez de repartir el mismo
+# núcleo. Broker e InfluxDB quedan aislados en k3s-hyrox.
+#
+# replicas arranca en 1; el orquestador (run_matrix.sh) lo escala a 1/2/4 por corrida.
+# Durante la matriz el HPA debe estar borrado y el auto-sync de ArgoCD pausado:
+# ambos revertirían el escalado manual.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: processor
+  namespace: hyrox
+  labels:
+    app.kubernetes.io/name: processor
+    app.kubernetes.io/component: stream-processor
+    app.kubernetes.io/part-of: hyrox-platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: processor
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: processor
+        app.kubernetes.io/component: stream-processor
+        app.kubernetes.io/part-of: hyrox-platform
+    spec:
+      nodeSelector:
+        node-role: compute
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: processor
+                topologyKey: kubernetes.io/hostname
+      containers:
+        - name: processor
+          image: hyrox/processor:0.5.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: INFLUX_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: influxdb-auth
+                  key: token
+          args:
+            - --broker-host
+            - mosquitto
+            - --broker-port
+            - "1883"
+            - --qos
+            - "1"
+            - --influx-url
+            - http://influxdb:8086
+            - --influx-org
+            - hyrox
+            - --influx-bucket
+            - telemetry
+            - --influx-token
+            - $(INFLUX_TOKEN)
+            - --share-group
+            - processors
+            - --metrics-interval
+            - "2"
+            - --log-level
+            - WARNING
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "64Mi"
+            limits:
+              cpu: "1"
+              memory: "256Mi"
