@@ -16,6 +16,3 @@ grafana:
   adminPassword: haritzblanco
   influx:
     token: token1234567890
-
-processor:
-  image: hyrox/processor:0.2.0
