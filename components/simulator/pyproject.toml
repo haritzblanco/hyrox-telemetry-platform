@@ -26,3 +26,7 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 "simulator.data" = ["*.json"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
