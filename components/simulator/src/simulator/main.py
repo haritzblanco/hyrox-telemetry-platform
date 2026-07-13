@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import logging
 import time
@@ -18,9 +19,15 @@ logger = logging.getLogger(__name__)
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Simulador de un atleta Hyrox calibrado, publicando en MQTT",
+        description="Simulador de atletas Hyrox calibrados, publicando en MQTT",
     )
-    parser.add_argument("--athlete-id", default="atleta-001")
+    parser.add_argument("--athletes", type=int, default=1,
+                        help="Atletas simulados por este proceso, cada uno con su "
+                             "propia conexión MQTT (default: %(default)s)")
+    parser.add_argument("--athlete-id", default="atleta-001",
+                        help="Id del atleta cuando --athletes es 1")
+    parser.add_argument("--athlete-prefix", default="atleta",
+                        help="Prefijo de los ids con --athletes > 1: <prefijo>-001..N")
     parser.add_argument("--broker-host", default="localhost")
     parser.add_argument("--broker-port", type=int, default=1883)
     parser.add_argument("--interval", type=float, default=1.0,
@@ -50,6 +57,21 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def athlete_specs(args: argparse.Namespace) -> list[tuple[str, int | None]]:
+    """Ids y semillas de los atletas de este proceso.
+
+    Con un solo atleta se respeta --athlete-id; con varios se numeran con el
+    prefijo. La semilla base se desplaza por atleta: pelotón variado pero
+    reproducible.
+    """
+    if args.athletes <= 1:
+        return [(args.athlete_id, args.seed)]
+    return [
+        (f"{args.athlete_prefix}-{i:03d}", None if args.seed is None else args.seed + i)
+        for i in range(1, args.athletes + 1)
+    ]
+
+
 def main() -> None:
     args = parse_args()
     logging.basicConfig(
@@ -59,50 +81,73 @@ def main() -> None:
 
     profile = SessionProfile.load(args.profile)
     sleep_time = args.interval / args.speedup
-
-    publisher = MqttPublisher(
-        host=args.broker_host, port=args.broker_port,
-        client_id=f"hyrox-sim-{args.athlete_id}", qos=args.qos,
-    )
+    specs = athlete_specs(args)
 
     logger.info(
-        "Simulador para %s | perfil=%s | %d fases | %ds de sesión | speedup=%.0fx",
-        args.athlete_id, profile.source, len(profile.phases),
+        "Simulador de %d atleta(s) | perfil=%s | %d fases | %ds de sesión | speedup=%.0fx",
+        len(specs), profile.source, len(profile.phases),
         profile.total_seconds, args.speedup,
     )
 
-    published = 0
-    with publisher:
+    # Una conexión MQTT por atleta, como en un evento real (cada dispositivo
+    # mantiene la suya): el broker ve la misma topología de clientes con 1 o
+    # con N atletas por proceso.
+    publishers = {
+        athlete_id: MqttPublisher(
+            host=args.broker_host, port=args.broker_port,
+            client_id=f"hyrox-sim-{athlete_id}", qos=args.qos,
+        )
+        for athlete_id, _ in specs
+    }
+
+    with contextlib.ExitStack() as stack:
+        for publisher in publishers.values():
+            stack.enter_context(publisher)
         try:
             while True:
                 session_id = args.session_id or datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
                 logger.info("Nueva sesión: %s", session_id)
-                athlete = Athlete(
-                    athlete_id=args.athlete_id, session_id=session_id,
-                    profile=profile, seed=args.seed,
-                    fitness=args.fitness, run_factor=args.run_factor,
-                    strength_factor=args.strength_factor,
-                    hr_offset=args.hr_offset, drift=args.drift,
-                )
-                while not athlete.finished:
-                    reading = athlete.next_reading()
-                    publisher.publish(reading)
-                    published += 1
-                    logger.debug("%s", reading.to_dict())
-                    time.sleep(sleep_time)
-                logger.info("Sesión completada para %s", args.athlete_id)
+                pending = [
+                    Athlete(
+                        athlete_id=athlete_id, session_id=session_id,
+                        profile=profile, seed=seed,
+                        fitness=args.fitness, run_factor=args.run_factor,
+                        strength_factor=args.strength_factor,
+                        hr_offset=args.hr_offset, drift=args.drift,
+                    )
+                    for athlete_id, seed in specs
+                ]
+                # Pacing por plazos absolutos: el sueño descuenta lo que costó
+                # publicar el tick, para que el ritmo no derive con N atletas.
+                next_tick = time.monotonic()
+                while pending:
+                    for athlete in pending:
+                        reading = athlete.next_reading()
+                        publishers[athlete.athlete_id].publish(reading)
+                        logger.debug("%s", reading.to_dict())
+                    pending = [a for a in pending if not a.finished]
+                    next_tick += sleep_time
+                    delay = next_tick - time.monotonic()
+                    if delay > 0:
+                        time.sleep(delay)
+                logger.info("Sesión completada (%d atletas)", len(specs))
                 if not args.loop:
                     break
         except KeyboardInterrupt:
             logger.info("Simulador detenido por el usuario")
 
-    # Resumen para las pruebas de carga: publicado vs persistido.
-    print(json.dumps({
-        "kind": "sim",
-        "athlete_id": args.athlete_id,
-        "session_id": args.session_id or "",
-        "published": published,
-    }), flush=True)
+    # Resumen para las pruebas de carga, una línea por atleta. La carga
+    # ofrecida real es `acked` (confirmado por el broker); `published` solo
+    # dice cuánto encoló el cliente y sobreestima si el generador va saturado.
+    for athlete_id, _ in specs:
+        publisher = publishers[athlete_id]
+        print(json.dumps({
+            "kind": "sim",
+            "athlete_id": athlete_id,
+            "session_id": args.session_id or "",
+            "published": publisher.enqueued,
+            "acked": publisher.acked,
+        }), flush=True)
 
 
 if __name__ == "__main__":
