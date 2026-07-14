@@ -17,7 +17,7 @@
 #   N_LIST="4 8 12 16 20"      lista de nº de atletas (carga)
 #   SPEEDUP=50                 aceleración temporal → tasa = N × SPEEDUP msg/s
 #   BROKER_HOST=192.168.252.2  BROKER_PORT=31883
-#   INFLUX_URL=http://192.168.252.2:30086   INFLUX_TOKEN=token1234567890
+#   INFLUX_URL=http://192.168.252.2:30086   INFLUX_TOKEN=<del Secret del clúster>
 #   SETTLE=6                   segundos de asentamiento tras escalar
 set -uo pipefail
 
@@ -30,7 +30,7 @@ SPEEDUP="${SPEEDUP:-50}"
 BROKER_HOST="${BROKER_HOST:-192.168.252.2}"
 BROKER_PORT="${BROKER_PORT:-31883}"
 INFLUX_URL="${INFLUX_URL:-http://192.168.252.2:30086}"
-INFLUX_TOKEN="${INFLUX_TOKEN:-token1234567890}"
+INFLUX_TOKEN="${INFLUX_TOKEN:-$(kubectl get secret influxdb-auth -n hyrox -o jsonpath='{.data.token}' | base64 -d)}"
 INFLUX_ORG="${INFLUX_ORG:-hyrox}"
 INFLUX_BUCKET="${INFLUX_BUCKET:-telemetry}"
 NS="${NS:-hyrox}"

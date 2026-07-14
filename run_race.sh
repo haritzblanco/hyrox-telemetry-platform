@@ -25,7 +25,8 @@ LOCAL_PROCESSOR=${LOCAL_PROCESSOR:-true}
 BROKER_HOST=${BROKER_HOST:-192.168.252.2}
 BROKER_PORT=${BROKER_PORT:-31883}
 INFLUX_URL=${INFLUX_URL:-http://192.168.252.2:30086}
-INFLUX_TOKEN=${INFLUX_TOKEN:-token1234567890}
+# El token ya no va embebido: si no viene dado, se lee del Secret del clúster.
+INFLUX_TOKEN=${INFLUX_TOKEN:-$(kubectl get secret influxdb-auth -n hyrox -o jsonpath='{.data.token}' | base64 -d)}
 
 SIM="components/simulator/.venv/bin/hyrox-sim"
 PROC="components/processor/.venv/bin/hyrox-processor"

@@ -55,7 +55,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--influx-url", default="http://localhost:8086")
     parser.add_argument("--influx-org", default="hyrox")
     parser.add_argument("--influx-bucket", default="telemetry")
-    parser.add_argument("--influx-token", default="token1234567890")
+    parser.add_argument("--influx-token", required=True)
     parser.add_argument("--log-level", default="INFO",
                         choices=["DEBUG", "INFO", "WARNING", "ERROR"])
     parser.add_argument(
