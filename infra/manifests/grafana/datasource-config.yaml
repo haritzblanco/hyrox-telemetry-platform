@@ -20,5 +20,5 @@ data:
           organization: hyrox
           defaultBucket: telemetry
         secureJsonData:
-          token: token1234567890
+          token: $__env{INFLUX_TOKEN}
         isDefault: true

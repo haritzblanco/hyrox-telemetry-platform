@@ -38,7 +38,16 @@ spec:
             - name: GF_SECURITY_ADMIN_USER
               value: {{ .Values.adminUser }}
             - name: GF_SECURITY_ADMIN_PASSWORD
-              value: {{ .Values.adminPassword }}
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-auth
+                  key: admin-password
+            # El datasource aprovisionado lo lee con $__env{INFLUX_TOKEN}.
+            - name: INFLUX_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-auth
+                  key: influx-token
             - name: GF_USERS_ALLOW_SIGN_UP
               value: "false"
             - name: GF_AUTH_TOKEN_ROTATION_INTERVAL_MINUTES

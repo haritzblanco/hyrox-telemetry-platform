@@ -1,18 +1,8 @@
 # Valores de la plataforma. Cada clave configura el subchart del mismo nombre;
 # los defaults de cada componente están en charts/<componente>/values.yaml.
-
-influxdb:
-  # Credenciales de desarrollo. En un despliegue real irían en un gestor de
-  # secretos externo, no en el repositorio.
-  auth:
-    username: admin
-    password: haritzblanco
-    org: hyrox
-    bucket: telemetry
-    token: token1234567890
-
-grafana:
-  adminUser: admin
-  adminPassword: haritzblanco
-  influx:
-    token: token1234567890
+#
+# Aquí no hay credenciales: viven cifradas en los SealedSecret de cada
+# subchart (influxdb-auth y grafana-auth) y solo el controller de Sealed
+# Secrets del clúster puede descifrarlas. Para consultarlas una vez
+# desplegadas:
+#   kubectl get secret influxdb-auth -n hyrox -o jsonpath='{.data.token}' | base64 -d

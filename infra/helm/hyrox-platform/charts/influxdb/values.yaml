@@ -5,12 +5,8 @@ nodeName: k3s-hyrox
 service:
   nodePort: 30086
 storage: 5Gi
-auth:
-  username: admin
-  password: cambiar
-  org: hyrox
-  bucket: telemetry
-  token: cambiar
+# Las credenciales no van en values: viven en el SealedSecret influxdb-auth
+# (templates/sealedsecret.yaml) y solo el controller del cluster las descifra.
 resources:
   requests:
     cpu: 100m
