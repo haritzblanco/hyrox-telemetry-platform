@@ -79,7 +79,7 @@ if [[ "$LOCAL_PROCESSOR" == "true" ]]; then
     echo "Iniciando procesador local (MQTT a InfluxDB)..."
     "$PROC" \
         --broker-host "$BROKER_HOST" --broker-port "$BROKER_PORT" \
-        --influx-url "$INFLUX_URL" --influx-token "$INFLUX_TOKEN" \
+        --influx-url "$INFLUX_URL" --influx-token="$INFLUX_TOKEN" \
         --log-level WARNING &
     PROC_PID=$!
     ALL_PIDS+=("$PROC_PID")

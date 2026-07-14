@@ -57,8 +57,9 @@ spec:
             - hyrox
             - --influx-bucket
             - telemetry
-            - --influx-token
-            - $(INFLUX_TOKEN)
+            # Forma con igual: el token generado por InfluxDB puede empezar
+            # por guion y argparse lo confundiria con otra opcion.
+            - --influx-token=$(INFLUX_TOKEN)
             - --share-group
             - {{ .Values.shareGroup }}
             - --log-level

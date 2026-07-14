@@ -65,8 +65,9 @@ spec:
             - --influx-bucket
             - telemetry
             # k8s sustituye $(INFLUX_TOKEN) por el valor del env definido arriba.
-            - --influx-token
-            - $(INFLUX_TOKEN)
+            # Forma con igual: el token puede empezar por guion y argparse lo
+            # confundiría con otra opción.
+            - --influx-token=$(INFLUX_TOKEN)
             # Grupo de suscripción compartida: reparte la carga entre réplicas.
             - --share-group
             - processors
