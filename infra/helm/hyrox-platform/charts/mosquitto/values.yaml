@@ -1,6 +1,18 @@
 image: eclipse-mosquitto:2.0.18
 service:
   nodePort: 31883
+# Sidecar que publica por HTTP el caudal de PUBLISH que entra al broker
+# (media móvil de 1 min de $SYS). Es la señal de escalado del procesador.
+exporter:
+  image: hyrox/broker-exporter:0.1.0
+  port: 9090
+  resources:
+    requests:
+      cpu: 10m
+      memory: 16Mi
+    limits:
+      cpu: 100m
+      memory: 64Mi
 # El broker es el punto de paso de todo el tráfico: un límite de CPU corto lo
 # convierte en el cuello de botella global (500m lo estrangulaba a ~800 msg/s
 # en la evaluación). Request moderado para el scheduler y techo holgado.

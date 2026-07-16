@@ -1,0 +1,19 @@
+# Servicio aparte del NodePort de MQTT: la métrica de carga solo se consume
+# dentro del clúster (KEDA) y no debe quedar expuesta en los nodos.
+apiVersion: v1
+kind: Service
+metadata:
+  name: mosquitto-metrics
+  labels:
+    app.kubernetes.io/name: mosquitto
+    app.kubernetes.io/component: broker
+    app.kubernetes.io/part-of: hyrox-platform
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: mosquitto
+  ports:
+    - name: metrics
+      port: {{ .Values.exporter.port }}
+      targetPort: metrics
+      protocol: TCP

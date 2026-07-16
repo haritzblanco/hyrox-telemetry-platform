@@ -13,4 +13,9 @@ resources:
 autoscaling:
   minReplicas: 1
   maxReplicas: 4
+  # Caudal que una réplica atiende con pérdida despreciable (campaña de
+  # julio de 2026): el pico de diseño de 800 msg/s entra con 2 réplicas.
+  targetMessagesPerSecond: 400
+  exporterPort: 9090
+  # Disparador de respaldo si el exporter no responde.
   targetCPU: 75

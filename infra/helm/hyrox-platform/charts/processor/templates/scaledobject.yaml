@@ -1,0 +1,54 @@
+# Autoescalado por caudal de mensajes con KEDA (sustituye al HPA por CPU).
+# La CPU era un proxy tardío: primero se llena la cola del broker y solo
+# después sube la CPU del procesador. Aquí la señal es la carga ofrecida al
+# broker (exporter sidecar de mosquitto), que es causal y llega antes.
+#
+# Dimensionado con la campaña de julio de 2026 (cap. 8): a 400 msg/s una
+# réplica pierde un 0,3%; a 800 (pico de diseño) pierde un 15% y hacen
+# falta dos. Con 400 msg/s por réplica, el pico de diseño se sirve con 2
+# y el techo del broker (~1600) con las 4 máximas.
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: processor
+  labels:
+    app.kubernetes.io/name: processor
+    app.kubernetes.io/component: stream-processor
+    app.kubernetes.io/part-of: hyrox-platform
+spec:
+  scaleTargetRef:
+    name: processor
+  minReplicaCount: {{ .Values.autoscaling.minReplicas }}
+  maxReplicaCount: {{ .Values.autoscaling.maxReplicas }}
+  pollingInterval: 15
+  triggers:
+    - type: metrics-api
+      metricType: AverageValue
+      metadata:
+        url: http://mosquitto-metrics.hyrox.svc.cluster.local:{{ .Values.autoscaling.exporterPort }}/load
+        valueLocation: messages_per_second
+        targetValue: {{ .Values.autoscaling.targetMessagesPerSecond | quote }}
+    # Respaldo: si el exporter deja de responder, el escalado por CPU del
+    # HPA original sigue operativo.
+    - type: cpu
+      metricType: Utilization
+      metadata:
+        value: {{ .Values.autoscaling.targetCPU | quote }}
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleUp:
+          # Reacciona rápido a una tanda de salida: puede doblar réplicas cada 30 s.
+          stabilizationWindowSeconds: 0
+          policies:
+            - type: Percent
+              value: 100
+              periodSeconds: 30
+        scaleDown:
+          # Conservador al bajar: espera 3 min de calma para no oscilar con los
+          # valles cortos entre tandas.
+          stabilizationWindowSeconds: 180
+          policies:
+            - type: Pods
+              value: 1
+              periodSeconds: 60

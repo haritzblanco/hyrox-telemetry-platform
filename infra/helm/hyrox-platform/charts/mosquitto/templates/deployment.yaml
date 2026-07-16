@@ -47,6 +47,29 @@ spec:
               port: 1883
             initialDelaySeconds: 2
             periodSeconds: 5
+        # Exporter de carga como sidecar: se suscribe a $SYS por localhost y
+        # sirve el caudal de publicaciones en JSON. KEDA lo consulta para
+        # escalar el procesador por carga ofrecida en vez de por CPU.
+        - name: exporter
+          image: {{ .Values.exporter.image }}
+          imagePullPolicy: IfNotPresent
+          args:
+            - --broker-host
+            - localhost
+            - --http-port
+            - {{ .Values.exporter.port | quote }}
+          ports:
+            - name: metrics
+              containerPort: {{ .Values.exporter.port }}
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: metrics
+            initialDelaySeconds: 2
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.exporter.resources | nindent 12 }}
       volumes:
         - name: config
           configMap:
