@@ -1,0 +1,28 @@
+[project]
+name = "hyrox-broker-exporter"
+version = "0.1.0"
+description = "Expone el caudal de publicaciones de Mosquitto para el autoescalador"
+authors = [{ name = "Haritz Blanco Bello" }]
+requires-python = ">=3.11"
+dependencies = [
+    "paho-mqtt>=2.1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.4",
+]
+
+[project.scripts]
+hyrox-broker-exporter = "broker_exporter.main:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
