@@ -1,0 +1,27 @@
+# Aplicación ArgoCD de KEDA, el autoescalador por eventos que escala el
+# procesador según el caudal de mensajes del broker (ScaledObject en el
+# subchart processor). Se instala desde el repositorio Helm oficial.
+#
+# ServerSideApply es obligatorio: los CRD de KEDA superan el límite de
+# tamaño de la anotación last-applied-configuration del apply clásico.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: keda
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://kedacore.github.io/charts
+    chart: keda
+    targetRevision: 2.20.1
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: keda
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
