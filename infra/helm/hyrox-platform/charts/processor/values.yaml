@@ -1,4 +1,4 @@
-image: hyrox/processor:0.5.0
+image: registry.digitalocean.com/haritzblanco/hyrox:processor-0.5.0
 shareGroup: processors
 logLevel: INFO
 resources:

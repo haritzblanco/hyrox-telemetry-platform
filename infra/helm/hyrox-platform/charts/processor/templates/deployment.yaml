@@ -33,10 +33,13 @@ spec:
                   matchLabels:
                     app.kubernetes.io/name: processor
                 topologyKey: kubernetes.io/hostname
+      # Credenciales de descarga del registro privado (DOCR), en el SealedSecret
+      # registry-haritzblanco.
+      imagePullSecrets:
+        - name: registry-haritzblanco
       containers:
         - name: processor
           image: {{ .Values.image }}
-          # Imagen importada en la containerd local de cada nodo (sin registry).
           imagePullPolicy: IfNotPresent
           env:
             - name: INFLUX_TOKEN

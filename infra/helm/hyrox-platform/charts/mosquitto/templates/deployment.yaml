@@ -20,6 +20,10 @@ spec:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
     spec:
+      # Solo el sidecar exporter se descarga del registro privado (DOCR); la
+      # imagen de mosquitto viene de Docker Hub y no necesita credenciales.
+      imagePullSecrets:
+        - name: registry-haritzblanco
       containers:
         - name: mosquitto
           image: {{ .Values.image }}
