@@ -31,4 +31,4 @@ data:
         uid: prometheus-hyrox
         url: http://prometheus-server.monitoring.svc.cluster.local
         jsonData:
-          timeInterval: 20s
+          timeInterval: 30s
