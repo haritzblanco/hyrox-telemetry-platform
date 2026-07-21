@@ -4,7 +4,7 @@ service:
 # Sidecar que publica por HTTP el caudal de PUBLISH que entra al broker
 # (media móvil de 1 min de $SYS). Es la señal de escalado del procesador.
 exporter:
-  image: registry.digitalocean.com/haritzblanco/hyrox:broker-exporter-0.1.0
+  image: registry.digitalocean.com/haritzblanco/hyrox:broker-exporter-0.2.0
   port: 9090
   resources:
     requests:

@@ -19,6 +19,10 @@ spec:
         app.kubernetes.io/part-of: hyrox-platform
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        # Prometheus raspa el caudal que expone el sidecar exporter en /metrics.
+        prometheus.io/scrape: "true"
+        prometheus.io/port: {{ .Values.exporter.port | quote }}
+        prometheus.io/path: /metrics
     spec:
       # Solo el sidecar exporter se descarga del registro privado (DOCR); la
       # imagen de mosquitto viene de Docker Hub y no necesita credenciales.
