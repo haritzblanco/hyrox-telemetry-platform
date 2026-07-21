@@ -1,0 +1,26 @@
+# Aplicación raíz (patrón App of Apps). Reconcilia los manifiestos de
+# Application que hay en infra/argocd/apps/ (plataforma, KEDA, Prometheus,
+# Sealed Secrets), de modo que editar cualquiera de ellos en el repositorio se
+# aplica solo, igual que el chart. Solo esta app raíz necesita un `kubectl apply`
+# inicial; el resto pasa a gestionarse desde git. Vive fuera de apps/ para no
+# gestionarse a sí misma.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/haritzblanco/hyrox-telemetry-platform.git
+    targetRevision: main
+    path: infra/argocd/apps
+    directory:
+      recurse: false
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
