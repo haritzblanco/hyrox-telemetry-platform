@@ -55,10 +55,28 @@ class LoadGauge:
             return self._value
 
 
+def render_metrics(value: float) -> str:
+    """Formatea el caudal como una métrica de Prometheus (formato de texto)."""
+    return (
+        "# HELP hyrox_broker_messages_per_second Mensajes PUBLISH recibidos por "
+        "el broker por segundo (media movil de 1 min).\n"
+        "# TYPE hyrox_broker_messages_per_second gauge\n"
+        f"hyrox_broker_messages_per_second {value:.3f}\n"
+    )
+
+
 class _Handler(BaseHTTPRequestHandler):
     gauge: LoadGauge
 
     def do_GET(self):
+        if self.path == "/metrics":
+            body = render_metrics(self.gauge.get()).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "text/plain; version=0.0.4")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
         if self.path not in ("/", "/load", "/healthz"):
             self.send_error(404)
             return

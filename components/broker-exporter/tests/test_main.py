@@ -2,7 +2,7 @@
 
 import pytest
 
-from broker_exporter.main import LoadGauge, per_second
+from broker_exporter.main import LoadGauge, per_second, render_metrics
 
 
 class TestPerSecond:
@@ -27,3 +27,10 @@ class TestLoadGauge:
         g = LoadGauge(stale_after_s=60.0)
         g.set(5.5, now=100.0)
         assert g.get(now=161.0) == 0.0
+
+
+class TestRenderMetrics:
+    def test_formato_prometheus(self):
+        out = render_metrics(12.3456)
+        assert "# TYPE hyrox_broker_messages_per_second gauge" in out
+        assert out.strip().endswith("hyrox_broker_messages_per_second 12.346")

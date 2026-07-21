@@ -1,6 +1,6 @@
 [project]
 name = "hyrox-broker-exporter"
-version = "0.1.0"
+version = "0.2.0"
 description = "Expone el caudal de publicaciones de Mosquitto para el autoescalador"
 authors = [{ name = "Haritz Blanco Bello" }]
 requires-python = ">=3.11"
