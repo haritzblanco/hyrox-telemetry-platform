@@ -23,5 +23,6 @@ backup:
   rcloneImage: rclone/rclone:1
   sftp:
     host: "209.38.107.95"
-    user: root
+    # Usuario dedicado sin shell, clave restringida a SFTP en el VPS (no root).
+    user: hyroxbackup
     path: /srv/hyrox-backups
