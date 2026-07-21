@@ -1,0 +1,89 @@
+{{- if .Values.backup.enabled }}
+# Backup lógico diario del bucket telemetry a un VPS externo por SFTP.
+# El motor de InfluxDB OSS no permite backup completo sin token de operador
+# (que este cluster no tiene), asi que se exporta el bucket como CSV anotado,
+# se comprime y se sube fuera del cluster. Dos fases: el initContainer exporta
+# con el token de la plataforma; el contenedor de rclone sube y aplica
+# retencion. Restauracion: influx write --format csv del fichero descomprimido.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: influxdb-backup
+  labels:
+    app.kubernetes.io/name: influxdb
+    app.kubernetes.io/component: backup
+    app.kubernetes.io/part-of: hyrox-platform
+spec:
+  schedule: {{ .Values.backup.schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        spec:
+          restartPolicy: Never
+          volumes:
+            - name: backup
+              emptyDir: {}
+            - name: ssh
+              secret:
+                secretName: influxdb-backup-ssh
+                defaultMode: 0400
+          initContainers:
+            - name: export
+              image: {{ .Values.image }}
+              imagePullPolicy: IfNotPresent
+              env:
+                - name: INFLUX_HOST
+                  value: http://influxdb:8086
+                - name: INFLUX_ORG
+                  value: hyrox
+                - name: INFLUX_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: influxdb-auth
+                      key: token
+              command:
+                - bash
+                - -c
+                - |
+                  set -eo pipefail
+                  ts=$(date -u +%Y%m%d-%H%M%S)
+                  influx query 'from(bucket:"telemetry") |> range(start: 0) |> drop(columns:["_start","_stop"])' --raw \
+                    | gzip > /backup/telemetry-$ts.csv.gz
+                  ls -la /backup
+              volumeMounts:
+                - name: backup
+                  mountPath: /backup
+          containers:
+            - name: upload
+              image: {{ .Values.backup.rcloneImage }}
+              imagePullPolicy: IfNotPresent
+              env:
+                - name: RCLONE_CONFIG_VPS_TYPE
+                  value: sftp
+                - name: RCLONE_CONFIG_VPS_HOST
+                  value: {{ .Values.backup.sftp.host | quote }}
+                - name: RCLONE_CONFIG_VPS_USER
+                  value: {{ .Values.backup.sftp.user | quote }}
+                - name: RCLONE_CONFIG_VPS_KEY_FILE
+                  value: /keys/id_ed25519
+                - name: RCLONE_CONFIG_VPS_KNOWN_HOSTS_FILE
+                  value: /keys/known_hosts
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -e
+                  rclone copy /backup VPS:{{ .Values.backup.sftp.path }} -v
+                  rclone delete VPS:{{ .Values.backup.sftp.path }} --min-age {{ .Values.backup.retentionHours }}h -v || true
+                  rclone ls VPS:{{ .Values.backup.sftp.path }}
+              volumeMounts:
+                - name: backup
+                  mountPath: /backup
+                - name: ssh
+                  mountPath: /keys
+                  readOnly: true
+{{- end }}

@@ -14,3 +14,14 @@ resources:
   limits:
     cpu: 1000m
     memory: 1Gi
+# Backup lógico diario del bucket telemetry a un VPS externo por SFTP. La clave
+# SSH y el known_hosts van cifrados en el SealedSecret influxdb-backup-ssh.
+backup:
+  enabled: true
+  schedule: "0 3 * * *"        # diario 03:00 UTC
+  retentionHours: 168          # conservar 7 días en el VPS
+  rcloneImage: rclone/rclone:1
+  sftp:
+    host: "209.38.107.95"
+    user: root
+    path: /srv/hyrox-backups
