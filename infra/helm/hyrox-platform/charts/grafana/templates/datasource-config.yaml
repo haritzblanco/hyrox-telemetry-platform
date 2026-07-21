@@ -23,3 +23,12 @@ data:
           # vez viene del SealedSecret grafana-auth.
           token: $__env{INFLUX_TOKEN}
         isDefault: true
+      # Métricas del clúster (recursos, réplicas, caudal) para el dashboard de
+      # evaluación. Prometheus vive en el namespace monitoring.
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        uid: prometheus-hyrox
+        url: http://prometheus-server.monitoring.svc.cluster.local
+        jsonData:
+          timeInterval: 20s

@@ -1,0 +1,63 @@
+# Aplicación ArgoCD de Prometheus para observar el clúster durante las pruebas
+# de carga (métricas de recursos, réplicas y caudal). Recortado para un banco de
+# pruebas: sin alertmanager ni pushgateway, retención corta y almacenamiento
+# efímero. NOTA: es para VISUALIZACIÓN; las cifras limpias de la evaluación salen
+# del arnés dedicado, que mide sin la sobrecarga de este stack.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: prometheus
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://prometheus-community.github.io/helm-charts
+    chart: prometheus
+    targetRevision: 29.18.0
+    helm:
+      values: |
+        alertmanager:
+          enabled: false
+        prometheus-pushgateway:
+          enabled: false
+        server:
+          retention: "12h"
+          global:
+            scrape_interval: 20s
+          persistentVolume:
+            enabled: false
+          nodeSelector:
+            node-role: compute
+          resources:
+            requests:
+              cpu: 100m
+              memory: 320Mi
+            limits:
+              cpu: 500m
+              memory: 640Mi
+        kube-state-metrics:
+          resources:
+            requests:
+              cpu: 20m
+              memory: 48Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+        prometheus-node-exporter:
+          resources:
+            requests:
+              cpu: 20m
+              memory: 24Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
