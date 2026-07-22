@@ -33,6 +33,9 @@ class MqttPublisher:
         port: int = 1883,
         client_id: str = "hyrox-simulator",
         qos: int = 1,
+        username: str | None = None,
+        password: str | None = None,
+        ca_certs: str | None = None,
     ) -> None:
         self.host = host
         self.port = port
@@ -44,6 +47,14 @@ class MqttPublisher:
             mqtt.CallbackAPIVersion.VERSION2,
             client_id=client_id,
         )
+        # Cada atleta se autentica con su propia identidad: la ACL del broker
+        # solo le deja publicar en hyrox/<usuario>/biometrics.
+        if username is not None:
+            self._client.username_pw_set(username, password)
+        # Con ca_certs el canal va cifrado y se valida el certificado del broker
+        # contra esa CA; es lo que exige el listener externo 8883.
+        if ca_certs is not None:
+            self._client.tls_set(ca_certs=ca_certs)
         self._client.on_connect = self._on_connect
         self._client.on_disconnect = self._on_disconnect
         self._client.on_publish = self._on_publish

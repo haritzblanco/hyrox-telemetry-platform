@@ -47,11 +47,25 @@ spec:
                 secretKeyRef:
                   name: influxdb-auth
                   key: token
+            - name: BROKER_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: processor-broker
+                  key: username
+            - name: BROKER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: processor-broker
+                  key: password
           args:
             - --broker-host
             - mosquitto
             - --broker-port
-            - "1883"
+            - "8883"
+            - --broker-username=$(BROKER_USERNAME)
+            - --broker-password=$(BROKER_PASSWORD)
+            - --broker-ca
+            - /etc/mqtt-ca/ca.crt
             - --qos
             - "1"
             - --influx-url
@@ -67,5 +81,13 @@ spec:
             - {{ .Values.shareGroup }}
             - --log-level
             - {{ .Values.logLevel }}
+          volumeMounts:
+            - name: mqtt-ca
+              mountPath: /etc/mqtt-ca
+              readOnly: true
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        - name: mqtt-ca
+          configMap:
+            name: mqtt-ca

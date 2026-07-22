@@ -7,12 +7,10 @@ metadata:
     app.kubernetes.io/part-of: hyrox-platform
 data:
   mosquitto.conf: |
-    # Sin autenticación: entorno de pruebas aislado. Para producción,
-    # allow_anonymous false con password_file o TLS mutuo.
-
-    listener 1883
-    protocol mqtt
-    allow_anonymous true
+    # Dos listeners con ajustes independientes: uno externo cifrado y
+    # autenticado para el simulador y el procesador, y otro plano accesible
+    # solo desde el propio pod para el sidecar exporter.
+    per_listener_settings true
 
     # Persistencia de mensajes retained y QoS 1/2 entre reinicios
     persistence true
@@ -27,8 +25,32 @@ data:
 
     max_connections -1
 
+    # Listener externo: TLS del servidor, contraseña por cliente y ACL que
+    # ata cada atleta a su propio topic. Es el único que publica el Service.
+    listener 8883
+    allow_anonymous false
+    password_file /mosquitto/auth/passwd
+    acl_file /mosquitto/config/acl
+    cafile /mosquitto/certs/ca.crt
+    certfile /mosquitto/certs/tls.crt
+    keyfile /mosquitto/certs/tls.key
     # Cola por suscriptor QoS 1/2 (defecto 1000): con picos de carga por encima
     # del caudal del procesador, una cola corta convierte el pico en descarte;
     # con 10000 (~3 MB) lo convierte en latencia recuperable. Dimensionado con
     # la evaluación experimental (cap. 8).
     max_queued_messages 10000
+
+    # Listener plano ligado a loopback: solo el sidecar exporter del mismo pod
+    # llega aquí para leer las métricas de $SYS, nunca se expone fuera.
+    listener 1883 127.0.0.1
+    allow_anonymous true
+    max_queued_messages 10000
+
+  acl: |
+    # Cada atleta solo puede publicar en su propio topic (identidad = usuario).
+    pattern write hyrox/%u/biometrics
+
+    # El procesador (cuenta de servicio) lee la telemetria de todos los atletas;
+    # cubre tambien la suscripcion compartida $share/processors/hyrox/+/biometrics.
+    user processor
+    topic read hyrox/+/biometrics

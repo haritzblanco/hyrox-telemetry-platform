@@ -27,6 +27,12 @@ BROKER_PORT=${BROKER_PORT:-31883}
 INFLUX_URL=${INFLUX_URL:-http://192.168.252.2:30086}
 # El token ya no va embebido: si no viene dado, se lee del Secret del clúster.
 INFLUX_TOKEN=${INFLUX_TOKEN:-$(kubectl get secret influxdb-auth -n hyrox -o jsonpath='{.data.token}' | base64 -d)}
+# El broker exige TLS + autenticación en el listener externo. La CA (pública)
+# valida el certificado del servidor; las contraseñas se leen de los Secret del
+# clúster para no dejarlas en el repo. El usuario de cada atleta es su propio id.
+CA_FILE=${CA_FILE:-infra/mqtt/ca.crt}
+DEVICE_PASSWORD=${DEVICE_PASSWORD:-$(kubectl get secret device-broker -n hyrox -o jsonpath='{.data.password}' | base64 -d)}
+PROC_PASSWORD=${PROC_PASSWORD:-$(kubectl get secret processor-broker -n hyrox -o jsonpath='{.data.password}' | base64 -d)}
 
 SIM="components/simulator/.venv/bin/hyrox-sim"
 PROC="components/processor/.venv/bin/hyrox-processor"
@@ -79,6 +85,8 @@ if [[ "$LOCAL_PROCESSOR" == "true" ]]; then
     echo "Iniciando procesador local (MQTT a InfluxDB)..."
     "$PROC" \
         --broker-host "$BROKER_HOST" --broker-port "$BROKER_PORT" \
+        --broker-username processor --broker-password="$PROC_PASSWORD" \
+        --broker-ca "$CA_FILE" \
         --influx-url "$INFLUX_URL" --influx-token="$INFLUX_TOKEN" \
         --log-level WARNING &
     PROC_PID=$!
@@ -112,6 +120,8 @@ run_race() {
             --session-id      "$session_id" \
             --broker-host     "$BROKER_HOST" \
             --broker-port     "$BROKER_PORT" \
+            --broker-password "$DEVICE_PASSWORD" \
+            --broker-ca       "$CA_FILE" \
             --speedup         "$SPEEDUP" \
             --fitness         "$fitness" \
             --run-factor      "$run_factor" \

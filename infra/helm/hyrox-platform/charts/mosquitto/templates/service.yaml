@@ -11,8 +11,8 @@ spec:
   selector:
     app.kubernetes.io/name: mosquitto
   ports:
-    - name: mqtt
-      port: 1883
-      targetPort: mqtt
+    - name: mqtt-tls
+      port: 8883
+      targetPort: mqtt-tls
       nodePort: {{ .Values.service.nodePort }}
       protocol: TCP

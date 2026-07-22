@@ -30,6 +30,12 @@ def parse_args() -> argparse.Namespace:
                         help="Prefijo de los ids con --athletes > 1: <prefijo>-001..N")
     parser.add_argument("--broker-host", default="localhost")
     parser.add_argument("--broker-port", type=int, default=1883)
+    parser.add_argument("--broker-password", default=None,
+                        help="Contraseña de dispositivo compartida por los atletas. "
+                             "El usuario es el propio id del atleta.")
+    parser.add_argument("--broker-ca", default=None,
+                        help="Ruta al certificado de la CA para validar el broker "
+                             "por TLS. Si se indica, la conexión va cifrada.")
     parser.add_argument("--interval", type=float, default=1.0,
                         help="Segundos reales entre publicaciones (default: %(default)s)")
     parser.add_argument("--speedup", type=float, default=1.0,
@@ -96,6 +102,8 @@ def main() -> None:
         athlete_id: MqttPublisher(
             host=args.broker_host, port=args.broker_port,
             client_id=f"hyrox-sim-{athlete_id}", qos=args.qos,
+            username=athlete_id, password=args.broker_password,
+            ca_certs=args.broker_ca,
         )
         for athlete_id, _ in specs
     }

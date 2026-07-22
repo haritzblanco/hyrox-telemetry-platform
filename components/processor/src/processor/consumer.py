@@ -24,6 +24,9 @@ class MqttConsumer:
         client_id: str = "hyrox-processor",
         qos: int = 1,
         share_group: str | None = None,
+        username: str | None = None,
+        password: str | None = None,
+        ca_certs: str | None = None,
     ) -> None:
         self.host = host
         self.port = port
@@ -39,6 +42,12 @@ class MqttConsumer:
             mqtt.CallbackAPIVersion.VERSION2,
             client_id=client_id,
         )
+        if username is not None:
+            self._client.username_pw_set(username, password)
+        # Con ca_certs el cliente valida el certificado del broker contra esa CA
+        # y cifra el canal; el broker exige TLS en el listener externo 8883.
+        if ca_certs is not None:
+            self._client.tls_set(ca_certs=ca_certs)
         self._client.on_connect = self._on_connect
         self._client.on_message = self._on_message
 

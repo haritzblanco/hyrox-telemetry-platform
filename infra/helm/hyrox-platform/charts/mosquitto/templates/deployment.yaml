@@ -33,6 +33,9 @@ spec:
           image: {{ .Values.image }}
           imagePullPolicy: IfNotPresent
           ports:
+            - name: mqtt-tls
+              containerPort: 8883
+              protocol: TCP
             - name: mqtt
               containerPort: 1883
               protocol: TCP
@@ -41,18 +44,31 @@ spec:
               mountPath: /mosquitto/config/mosquitto.conf
               subPath: mosquitto.conf
               readOnly: true
+            - name: config
+              mountPath: /mosquitto/config/acl
+              subPath: acl
+              readOnly: true
+            - name: certs
+              mountPath: /mosquitto/certs
+              readOnly: true
+            - name: auth
+              mountPath: /mosquitto/auth
+              readOnly: true
             - name: data
               mountPath: /mosquitto/data
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          # El listener plano 1883 solo escucha en loopback, así que el kubelet
+          # sondea el listener externo 8883. Un probe TCP solo abre la conexión,
+          # no necesita completar el handshake TLS.
           livenessProbe:
             tcpSocket:
-              port: 1883
+              port: 8883
             initialDelaySeconds: 5
             periodSeconds: 10
           readinessProbe:
             tcpSocket:
-              port: 1883
+              port: 8883
             initialDelaySeconds: 2
             periodSeconds: 5
         # Exporter de carga como sidecar: se suscribe a $SYS por localhost y
@@ -82,5 +98,11 @@ spec:
         - name: config
           configMap:
             name: mosquitto-config
+        - name: certs
+          secret:
+            secretName: mosquitto-tls
+        - name: auth
+          secret:
+            secretName: mosquitto-passwd
         - name: data
           emptyDir: {}

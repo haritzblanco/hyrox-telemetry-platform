@@ -39,6 +39,13 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--broker-host", default="localhost")
     parser.add_argument("--broker-port", type=int, default=1883)
+    parser.add_argument("--broker-username", default=None,
+                        help="Usuario MQTT. El broker exige autenticación en el "
+                             "listener externo; sin él la conexión se rechaza.")
+    parser.add_argument("--broker-password", default=None, help="Contraseña MQTT.")
+    parser.add_argument("--broker-ca", default=None,
+                        help="Ruta al certificado de la CA para validar el broker "
+                             "por TLS. Si se indica, la conexión va cifrada.")
     parser.add_argument("--topic", default="hyrox/+/biometrics")
     parser.add_argument("--qos", type=int, choices=[0, 1, 2], default=1)
     parser.add_argument(
@@ -110,6 +117,8 @@ def main() -> None:
             host=args.broker_host, port=args.broker_port,
             topic=args.topic, on_reading=handle, qos=args.qos,
             client_id=client_id, share_group=args.share_group,
+            username=args.broker_username, password=args.broker_password,
+            ca_certs=args.broker_ca,
         )
         # SIGTERM sigue el camino de Ctrl-C para vaciar los lotes pendientes al salir.
         signal.signal(signal.SIGTERM, lambda *_: (_ for _ in ()).throw(KeyboardInterrupt))
