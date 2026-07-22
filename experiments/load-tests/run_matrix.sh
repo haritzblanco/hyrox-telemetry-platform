@@ -31,6 +31,9 @@ BROKER_HOST="${BROKER_HOST:-192.168.252.2}"
 BROKER_PORT="${BROKER_PORT:-31883}"
 INFLUX_URL="${INFLUX_URL:-http://192.168.252.2:30086}"
 INFLUX_TOKEN="${INFLUX_TOKEN:-$(kubectl get secret influxdb-auth -n hyrox -o jsonpath='{.data.token}' | base64 -d)}"
+# El broker exige TLS + autenticación: CA pública y contraseña de dispositivo.
+CA_FILE="${CA_FILE:-$ROOT/infra/mqtt/ca.crt}"
+DEVICE_PASSWORD="${DEVICE_PASSWORD:-$(kubectl get secret device-broker -n hyrox -o jsonpath='{.data.password}' | base64 -d)}"
 INFLUX_ORG="${INFLUX_ORG:-hyrox}"
 INFLUX_BUCKET="${INFLUX_BUCKET:-telemetry}"
 NS="${NS:-hyrox}"
@@ -113,6 +116,7 @@ run_one() {
     : > "$rundir/sim.jsonl"
     "$SIM" --athletes "$N" --athlete-prefix atleta --session-id "$session" \
            --broker-host "$BROKER_HOST" --broker-port "$BROKER_PORT" \
+           --broker-password "$DEVICE_PASSWORD" --broker-ca "$CA_FILE" \
            --speedup "$SPEEDUP" --seed 42 --log-level WARNING \
            >> "$rundir/sim.jsonl" 2>/dev/null &
     local sim_pid=$!

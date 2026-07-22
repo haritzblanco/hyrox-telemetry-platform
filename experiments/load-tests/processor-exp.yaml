@@ -1,7 +1,7 @@
 # Deployment del procesador para la EVALUACIÓN EXPERIMENTAL.
 #
-# Idéntico al de producción salvo:
-#   - imagen instrumentada hyrox/processor:0.4.0 (métricas de latencia/throughput),
+# Idéntico al de producción (misma imagen del registro, TLS + autenticación
+# contra el broker en 8883) salvo:
 #   - --metrics-interval 2 → emite una línea JSON de métricas cada 2 s por stdout,
 #   - --log-level WARNING → silencia el log de progreso para no ensuciar kubectl logs
 #     (las líneas de métricas se imprimen con print, no por el logger).
@@ -46,9 +46,11 @@ spec:
                   matchLabels:
                     app.kubernetes.io/name: processor
                 topologyKey: kubernetes.io/hostname
+      imagePullSecrets:
+        - name: registry-haritzblanco
       containers:
         - name: processor
-          image: hyrox/processor:0.5.0
+          image: registry.digitalocean.com/haritzblanco/hyrox:processor-0.6.0
           imagePullPolicy: IfNotPresent
           env:
             - name: INFLUX_TOKEN
@@ -56,11 +58,25 @@ spec:
                 secretKeyRef:
                   name: influxdb-auth
                   key: token
+            - name: BROKER_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: processor-broker
+                  key: username
+            - name: BROKER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: processor-broker
+                  key: password
           args:
             - --broker-host
             - mosquitto
             - --broker-port
-            - "1883"
+            - "8883"
+            - --broker-username=$(BROKER_USERNAME)
+            - --broker-password=$(BROKER_PASSWORD)
+            - --broker-ca
+            - /etc/mqtt-ca/ca.crt
             - --qos
             - "1"
             - --influx-url
@@ -69,14 +85,17 @@ spec:
             - hyrox
             - --influx-bucket
             - telemetry
-            - --influx-token
-            - $(INFLUX_TOKEN)
+            - --influx-token=$(INFLUX_TOKEN)
             - --share-group
             - processors
             - --metrics-interval
             - "2"
             - --log-level
             - WARNING
+          volumeMounts:
+            - name: mqtt-ca
+              mountPath: /etc/mqtt-ca
+              readOnly: true
           resources:
             requests:
               cpu: "200m"
@@ -84,3 +103,7 @@ spec:
             limits:
               cpu: "1"
               memory: "256Mi"
+      volumes:
+        - name: mqtt-ca
+          configMap:
+            name: mqtt-ca

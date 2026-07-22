@@ -129,10 +129,22 @@ def main():
     ap.add_argument("--label", required=True)
     ap.add_argument("--broker-host", default="192.168.252.2")
     ap.add_argument("--broker-port", type=int, default=31883)
+    ap.add_argument("--broker-ca", default="infra/mqtt/ca.crt",
+                    help="CA para validar el broker por TLS")
+    ap.add_argument("--broker-password", default=None,
+                    help="Contraseña de dispositivo; por defecto se lee del "
+                         "Secret device-broker del cluster")
     ap.add_argument("--outdir", required=True)
     ap.add_argument("--sim",
                     default="components/simulator/.venv/bin/hyrox-sim")
     args = ap.parse_args()
+
+    if args.broker_password is None:
+        args.broker_password = subprocess.check_output(
+            ["kubectl", "get", "secret", "device-broker", "-n", "hyrox",
+             "-o", "jsonpath={.data.password}"]).decode()
+        import base64
+        args.broker_password = base64.b64decode(args.broker_password).decode()
 
     outdir = Path(args.outdir)
     outdir.mkdir(parents=True, exist_ok=True)
@@ -146,6 +158,7 @@ def main():
         [args.sim, "--athletes", str(args.athletes),
          "--athlete-prefix", "atleta", "--session-id", session,
          "--broker-host", args.broker_host, "--broker-port", str(args.broker_port),
+         "--broker-password", args.broker_password, "--broker-ca", args.broker_ca,
          "--speedup", str(args.speedup), "--seed", "42",
          "--log-level", "WARNING"] + (["--loop"] if args.loop else []),
         stdout=sim_out, stderr=subprocess.DEVNULL)
