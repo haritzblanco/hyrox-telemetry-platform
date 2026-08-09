@@ -1,0 +1,13 @@
+{
+  "run": "R2_N16",
+  "replicas": 2,
+  "athletes": 16,
+  "speedup": 50,
+  "target_rate_msg_s": 800,
+  "session": "exp_R2_N16_195451",
+  "start": "2026-07-12T19:54:51+00:00",
+  "end": "2026-07-12T19:56:25+00:00",
+  "enqueued": 63990,
+  "offered": 63990,
+  "delivered": 53795
+}

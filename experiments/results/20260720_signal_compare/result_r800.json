@@ -1,0 +1,12 @@
+{
+  "label": "r800",
+  "session": "cmp_r800_142056",
+  "athletes": 40,
+  "speedup": 20,
+  "nominal_msg_s": 800,
+  "hold_s": 260,
+  "acked": 159787,
+  "enqueued": 159787,
+  "persisted": 150773,
+  "loss_pct": 5.64
+}

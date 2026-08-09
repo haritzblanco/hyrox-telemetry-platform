@@ -1,0 +1,4 @@
+{"kind": "sim", "athlete_id": "atleta-001", "session_id": "exp_R2_N4_160344", "published": 3989, "acked": 3989, "ack_latency_ms": {"n": 3989, "mean": 6.07, "p50": 5.62, "p95": 9.99, "p99": 13.87, "max": 37.31}}
+{"kind": "sim", "athlete_id": "atleta-002", "session_id": "exp_R2_N4_160344", "published": 3956, "acked": 3956, "ack_latency_ms": {"n": 3956, "mean": 6.88, "p50": 6.54, "p95": 10.71, "p99": 16.04, "max": 52.67}}
+{"kind": "sim", "athlete_id": "atleta-003", "session_id": "exp_R2_N4_160344", "published": 4029, "acked": 4029, "ack_latency_ms": {"n": 4029, "mean": 7.35, "p50": 7.03, "p95": 11.49, "p99": 17.08, "max": 45.66}}
+{"kind": "sim", "athlete_id": "atleta-004", "session_id": "exp_R2_N4_160344", "published": 3911, "acked": 3911, "ack_latency_ms": {"n": 3911, "mean": 7.93, "p50": 7.44, "p95": 12.82, "p99": 19.74, "max": 55.83}}

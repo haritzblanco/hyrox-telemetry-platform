@@ -1,0 +1,12 @@
+{
+  "label": "r1200",
+  "session": "cmp_r1200_140140",
+  "athletes": 20,
+  "speedup": 60,
+  "nominal_msg_s": 1200,
+  "hold_s": 240,
+  "acked": 280361,
+  "enqueued": 280360,
+  "persisted": 181066,
+  "loss_pct": 35.42
+}

@@ -1,0 +1,12 @@
+{
+  "run": "R1_N64",
+  "replicas": 1,
+  "athletes": 64,
+  "speedup": 50,
+  "target_rate_msg_s": 3200,
+  "session": "exp_R1_N64_074108",
+  "start": "2026-06-17T07:41:08+00:00",
+  "end": "2026-06-17T07:42:47+00:00",
+  "offered": 255881,
+  "delivered": 38737
+}

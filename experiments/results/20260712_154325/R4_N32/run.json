@@ -1,0 +1,13 @@
+{
+  "run": "R4_N32",
+  "replicas": 4,
+  "athletes": 32,
+  "speedup": 50,
+  "target_rate_msg_s": 1600,
+  "session": "exp_R4_N32_162340",
+  "start": "2026-07-12T16:23:40+00:00",
+  "end": "2026-07-12T16:25:43+00:00",
+  "enqueued": 127371,
+  "offered": 127371,
+  "delivered": 20383
+}

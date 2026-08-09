@@ -1,0 +1,6 @@
+── k3s-hyrox ────────────────────────────────────
+k3s-hyrox: offset (VM − Mac) = +156.0 ms  (RTT exec ≈ 257 ms)
+k3s-hyrox: REVISAR (>50 ms: descontar en el análisis)
+── hyrox-worker ────────────────────────────────────
+hyrox-worker: offset (VM − Mac) = +157.9 ms  (RTT exec ≈ 252 ms)
+hyrox-worker: REVISAR (>50 ms: descontar en el análisis)
