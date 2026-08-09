@@ -17,9 +17,18 @@ resources:
 autoscaling:
   minReplicas: 1
   maxReplicas: 4
-  # Caudal que una réplica atiende con pérdida despreciable (campaña de
-  # julio de 2026): el pico de diseño de 800 msg/s entra con 2 réplicas.
+  # Caudal por réplica, dimensionado con la capacidad medida: dos réplicas
+  # sostienen el pico de diseño (800 msg/s) con 103 ms de latencia de transporte
+  # p95, pérdida por debajo del 0,01% y 162-192 mCPU cada una frente al límite
+  # de 1000m (campaña del 9 de agosto de 2026, results/20260809_193353).
+  # Bajarlo a 300 se probó y no cambia nada al pico: en el arranque en frío el
+  # caudal por réplica no llega a alcanzar el umbral ni con 300, porque la
+  # métrica sale de $SYS del broker (media móvil de un minuto) y va por detrás
+  # de un transitorio que se resuelve en dos. Quien escala ahí es targetCPU.
   targetMessagesPerSecond: 400
   exporterPort: 9090
-  # Disparador de respaldo si el exporter no responde.
+  # Disparador de respaldo si el exporter no responde. En la práctica es el que
+  # ordena las réplicas durante el arranque en frío: salta en cuanto la primera
+  # réplica pasa del 100% de su request, antes de que la media móvil del caudal
+  # reaccione (results/20260809_194700_target400_cold: 1→4 réplicas en 1min 57s).
   targetCPU: 75
