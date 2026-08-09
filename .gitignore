@@ -29,6 +29,10 @@ data/fit-samples/*.fit
 experiments/results/*.csv
 !experiments/results/.gitkeep
 
+# Documentación de la memoria y diagramas: se mantienen solo en local
+docs/
+infra/diagrams/
+
 # Build
 dist/
 build/
