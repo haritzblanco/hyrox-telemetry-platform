@@ -79,23 +79,37 @@ influx_count() {
       |> filter(fn:(r) => r._measurement==\"biometrics\" and r.session_id==\"$session\" and r._field==\"heart_rate\")
       |> group()
       |> count()"
-    curl -s -m 30 --request POST "$INFLUX_URL/api/v2/query?org=$INFLUX_ORG" \
-        --header "Authorization: Token $INFLUX_TOKEN" \
-        --header "Accept: application/csv" \
-        --header "Content-Type: application/vnd.flux" \
-        --data "$flux" 2>/dev/null | \
-    python3 -c "import sys,csv
-tot=0
+    # Con InfluxDB ocupado la consulta puede agotar el plazo. Un 0 en ese caso
+    # entraría en el dataset como pérdida total, así que se reintenta y, si no
+    # hay respuesta válida, se devuelve vacío para marcar la corrida como no
+    # medida en lugar de inventar una cifra.
+    local raw
+    for _ in 1 2 3; do
+        raw="$(curl -s -m 60 --request POST "$INFLUX_URL/api/v2/query?org=$INFLUX_ORG" \
+            --header "Authorization: Token $INFLUX_TOKEN" \
+            --header "Accept: application/csv" \
+            --header "Content-Type: application/vnd.flux" \
+            --data "$flux" 2>/dev/null | \
+        python3 -c "import sys,csv
+tot=None
 for r in csv.reader(sys.stdin):
     if r and r[-1].strip().isdigit():
         tot=int(r[-1])
-print(tot)" 2>/dev/null || echo 0
+print('' if tot is None else tot)" 2>/dev/null | head -1)"
+        if [[ "$raw" =~ ^[0-9]+$ ]]; then
+            echo "$raw"
+            return 0
+        fi
+        sleep 5
+    done
+    echo ""
+    return 1
 }
 
 # ── una corrida (R réplicas, N atletas) ─────────────────────────────────────
 run_one() {
-    local R="$1" N="$2"
-    local run="R${R}_N${N}"
+    local R="$1" N="$2" suffix="${3:-}"
+    local run="R${R}_N${N}${suffix}"
     local rundir="$OUTDIR/$run"
     mkdir -p "$rundir"
     local session="exp_${run}_$(date -u +%H%M%S)"
@@ -153,28 +167,66 @@ print(enq, ack)")"
     local enqueued offered
     read -r enqueued offered <<< "$counts"
     local delivered; delivered="$(influx_count "$session")"
+    local delivered_json="null" perdida="sin medir"
+    if [[ "$delivered" =~ ^[0-9]+$ ]]; then
+        delivered_json="$delivered"
+        perdida="$(( offered - delivered ))"
+    else
+        echo "   AVISO: InfluxDB no respondió al conteo; la corrida queda sin pérdida medida"
+        delivered="sin medir"
+    fi
 
     python3 -c "
 import json
 json.dump({'run':'$run','replicas':$R,'athletes':$N,'speedup':$SPEEDUP,
            'target_rate_msg_s':$rate,'session':'$session',
            'start':'$start_iso','end':'$end_iso',
-           'enqueued':$enqueued,'offered':$offered,'delivered':$delivered},
+           'enqueued':$enqueued,'offered':$offered,'delivered':$delivered_json},
           open('$rundir/run.json','w'), indent=2)"
-    echo "   encolado=$enqueued  ofrecido(acked)=$offered  persistido=$delivered  (pérdida=$(( offered - delivered )))"
+    echo "   encolado=$enqueued  ofrecido(acked)=$offered  persistido=$delivered  (pérdida=$perdida)"
     echo ""
 }
 
-# ── matriz ──────────────────────────────────────────────────────────────────
-for R in $REPLICAS; do
-    echo "### Escalando processor a $R réplica(s) ###"
-    kubectl scale deployment/processor -n "$NS" --replicas="$R" >/dev/null
-    kubectl rollout status deployment/processor -n "$NS" --timeout=120s
-    sleep "$SETTLE"
-    for N in $N_LIST; do
-        run_one "$R" "$N"
+# ── matriz o secuencia explícita ────────────────────────────────────────────
+# Con SEQUENCE se ejecuta exactamente el orden indicado en lugar del producto
+# cartesiano. Sirve para diseños cruzados: repetir la misma celda al principio y
+# al final de la tanda separa el efecto de la configuración del efecto del
+# desgaste acumulado (InfluxDB compactando, host caliente), que de otro modo se
+# confunden porque la matriz recorre las réplicas siempre en el mismo orden.
+if [[ -n "${SEQUENCE:-}" ]]; then
+    echo "Secuencia explícita: $SEQUENCE (cooldown ${COOLDOWN:-0}s entre corridas)"
+    echo ""
+    idx=0
+    current_r=""
+    for pair in $SEQUENCE; do
+        R="${pair%%:*}"; N="${pair##*:}"
+        idx=$((idx + 1))
+        if [[ "$R" != "$current_r" ]]; then
+            echo "### Escalando processor a $R réplica(s) ###"
+            kubectl scale deployment/processor -n "$NS" --replicas="$R" >/dev/null
+            kubectl rollout status deployment/processor -n "$NS" --timeout=120s
+            sleep "$SETTLE"
+            current_r="$R"
+        fi
+        run_one "$R" "$N" "_s${idx}"
+        # El descanso deja a InfluxDB terminar de compactar lo de la corrida
+        # anterior, para que no lo pague la siguiente.
+        if [[ "${COOLDOWN:-0}" -gt 0 ]]; then
+            echo "   descanso de ${COOLDOWN}s..."
+            sleep "${COOLDOWN}"
+        fi
     done
-done
+else
+    for R in $REPLICAS; do
+        echo "### Escalando processor a $R réplica(s) ###"
+        kubectl scale deployment/processor -n "$NS" --replicas="$R" >/dev/null
+        kubectl rollout status deployment/processor -n "$NS" --timeout=120s
+        sleep "$SETTLE"
+        for N in $N_LIST; do
+            run_one "$R" "$N"
+        done
+    done
+fi
 
 echo "=== Matriz completada. Analiza con: ==="
 echo "    python experiments/notebooks/analyze.py $OUTDIR"
