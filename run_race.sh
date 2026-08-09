@@ -42,7 +42,7 @@ FITNESS_SD=${FITNESS_SD:-0.15}
 FITNESS_SEED=${FITNESS_SEED:-7}
 # Cuatro parámetros por atleta, sorteados con semilla fija (misma orden =
 # mismos atletas). Rangos calibrados con las 3 carreras reales:
-#   fitness   normal truncada [0.84, 1.60]: de ~56 min (el récord ronda 54) a ~1h45
+#   fitness   normal truncada [0.84, 1.60] por remuestreo: de ~56 min (récord ~54) a ~1h45
 #   tilt      gauss(0, 0.06) truncado a 0.14; run_factor=1+tilt, strength_factor=1-tilt
 #   hr_offset gauss(0, 7) bpm, truncado a 15
 #   drift     uniforme 12-34 bpm
@@ -50,8 +50,12 @@ FITNESS_SEED=${FITNESS_SEED:-7}
 PERSONAS=( $(python3 -c "
 import random
 random.seed($FITNESS_SEED)
+def tg(mu,sd,lo,hi):
+    while True:
+        v=random.gauss(mu,sd)
+        if lo<=v<=hi: return v
 for _ in range($N_ATLETAS):
-    fit=min(1.60,max(0.84,random.gauss($FITNESS_MEAN,$FITNESS_SD)))
+    fit=tg($FITNESS_MEAN,$FITNESS_SD,0.84,1.60)
     tilt=max(-0.14,min(0.14,random.gauss(0,0.06)))
     hro=min(15.0,max(-15.0,random.gauss(0,7)))
     dr =random.uniform(12,34)
