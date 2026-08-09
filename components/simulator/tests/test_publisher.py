@@ -66,6 +66,30 @@ def test_drain_agota_el_plazo_si_no_llegan(publisher):
     assert publisher.drain(timeout=0.15) is False
 
 
+def test_sin_confirmaciones_no_hay_estadistica_de_retardo(publisher):
+    publisher.publish(_lectura())
+    assert publisher.ack_latency_stats() is None
+
+
+def test_estadistica_del_retardo_hasta_el_puback(publisher):
+    for mid in (1, 2, 3):
+        publisher._client.publish.return_value = MagicMock(rc=mqtt.MQTT_ERR_SUCCESS, mid=mid)
+        publisher.publish(_lectura())
+    for mid in (1, 2, 3):
+        publisher._on_publish(None, None, mid, None, None)
+
+    stats = publisher.ack_latency_stats()
+    assert stats["n"] == 3
+    assert stats["p50"] >= 0.0
+    assert stats["max"] >= stats["p50"]
+
+
+def test_puback_de_un_mid_desconocido_no_deja_muestra(publisher):
+    publisher._on_publish(None, None, 999, None, None)
+    assert publisher.acked == 1
+    assert publisher.ack_latency_stats() is None
+
+
 def test_salir_drena_antes_de_desconectar(publisher):
     orden = []
     publisher.drain = lambda *a, **k: orden.append("drain")

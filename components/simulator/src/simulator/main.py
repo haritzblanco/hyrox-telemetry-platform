@@ -155,6 +155,9 @@ def main() -> None:
             "session_id": args.session_id or "",
             "published": publisher.enqueued,
             "acked": publisher.acked,
+            # Retardo publicación → PUBACK: cuánto del retardo total lo pone el
+            # generador antes de que la lectura entre en la plataforma.
+            "ack_latency_ms": publisher.ack_latency_stats(),
         }), flush=True)
 
 

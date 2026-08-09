@@ -25,6 +25,12 @@ class MqttPublisher:
     (PUBACK del broker con QoS 1): si la máquina que simula va saturada, el
     cliente encola más rápido de lo que transmite y solo el recuento de
     confirmadas dice cuántas lecturas entraron de verdad en la plataforma.
+
+    Del mismo modo cronometra cada publicación hasta su PUBACK. Ese tiempo
+    cubre la espera en la cola local del cliente más la ida y vuelta hasta el
+    broker, de modo que separa el retardo que aporta el generador del que
+    aporta la plataforma: si la confirmación tarda tanto como la latencia
+    medida en el procesador, la cola está aquí y no en el clúster.
     """
 
     def __init__(
@@ -43,6 +49,9 @@ class MqttPublisher:
         self.enqueued = 0
         self.acked = 0
         self._ack_event = threading.Event()
+        self._pending_sent: dict[int, float] = {}
+        self._ack_latencies: list[float] = []
+        self._lat_lock = threading.Lock()
         self._client = mqtt.Client(
             mqtt.CallbackAPIVersion.VERSION2,
             client_id=client_id,
@@ -77,6 +86,8 @@ class MqttPublisher:
         result = self._client.publish(topic, payload, qos=self.qos)
         if result.rc == mqtt.MQTT_ERR_SUCCESS:
             self.enqueued += 1
+            with self._lat_lock:
+                self._pending_sent[result.mid] = time.monotonic()
         else:
             logger.warning("Fallo publicando en %s: rc=%s", topic, result.rc)
 
@@ -100,8 +111,38 @@ class MqttPublisher:
             self._ack_event.clear()
         return True
 
+    def ack_latency_stats(self) -> dict | None:
+        """Resumen (n, media, p50/p95/p99, máx) del retardo hasta el PUBACK, en ms."""
+        with self._lat_lock:
+            values = sorted(self._ack_latencies)
+        if not values:
+            return None
+
+        def pct(q: float) -> float:
+            if len(values) == 1:
+                return values[0]
+            pos = q * (len(values) - 1)
+            lo = int(pos)
+            hi = min(lo + 1, len(values) - 1)
+            frac = pos - lo
+            return values[lo] * (1.0 - frac) + values[hi] * frac
+
+        return {
+            "n": len(values),
+            "mean": round(sum(values) / len(values), 2),
+            "p50": round(pct(0.50), 2),
+            "p95": round(pct(0.95), 2),
+            "p99": round(pct(0.99), 2),
+            "max": round(values[-1], 2),
+        }
+
     def _on_publish(self, client, userdata, mid, reason_code, properties):
         self.acked += 1
+        now = time.monotonic()
+        with self._lat_lock:
+            sent = self._pending_sent.pop(mid, None)
+            if sent is not None:
+                self._ack_latencies.append((now - sent) * 1000.0)
         self._ack_event.set()
 
     @staticmethod
