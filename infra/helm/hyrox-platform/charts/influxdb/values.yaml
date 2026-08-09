@@ -13,7 +13,10 @@ resources:
     memory: 256Mi
   limits:
     cpu: 1000m
-    memory: 1Gi
+    # 1Gi se quedaba corto cuando el backup consultaba el bucket entero de una
+    # vez: el propio export mataba a la base (OOMKilled, 2026-08-09). El export
+    # ya va por ventanas, así que esto es colchón, no la solución.
+    memory: 2Gi
 # Backup lógico diario del bucket telemetry a un VPS externo por SFTP. La clave
 # SSH y el known_hosts van cifrados en el SealedSecret influxdb-backup-ssh.
 backup:
@@ -21,6 +24,10 @@ backup:
   schedule: "0 3 * * *"        # diario 03:00 UTC
   retentionHours: 168          # conservar 7 días en el VPS
   rcloneImage: rclone/rclone:1
+  # Inicio del volcado por ventanas diarias. Anterior al primer dato del bucket
+  # (la plataforma empezó a escribir en mayo de 2026); las ventanas vacías se
+  # resuelven en milisegundos.
+  exportFrom: "2026-05-01T00:00:00Z"
   sftp:
     host: "209.38.107.95"
     # Usuario dedicado sin shell, clave restringida a SFTP en el VPS (no root).

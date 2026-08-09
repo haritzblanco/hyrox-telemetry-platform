@@ -51,8 +51,33 @@ spec:
                 - |
                   set -eo pipefail
                   ts=$(date -u +%Y%m%d-%H%M%S)
-                  influx query 'from(bucket:"telemetry") |> range(start: 0) |> drop(columns:["_start","_stop"])' --raw \
-                    | gzip > /backup/telemetry-$ts.csv.gz
+                  out=/backup/telemetry-$ts.csv
+
+                  # El volcado se pide por ventanas en vez de con una sola
+                  # consulta con range(start: 0). Con el bucket entero, InfluxDB
+                  # materializa todo el resultado y se sale de su limite de
+                  # memoria: el 2026-08-09 lo mato el propio backup (OOMKilled a
+                  # los 80 s) y el fallo era ya diario. La ventana es de un dia
+                  # porque una sola jornada de campana experimental (600.000
+                  # lecturas el 2026-08-09) basta para tumbarlo: con ventanas
+                  # mensuales agosto seguia sin caber. Asi el pico de memoria
+                  # depende del dia mas cargado, no del bucket acumulado.
+                  #
+                  # El CSV anotado admite varios bloques concatenados: cada
+                  # ventana aporta su cabecera de anotaciones y `influx write
+                  # --format csv` los lee en secuencia al restaurar.
+                  v={{ .Values.backup.exportFrom }}
+                  hasta=$(date -u -d "tomorrow" +%Y-%m-%dT00:00:00Z)
+                  while [ "$(date -u -d "$v" +%s)" -lt "$(date -u -d "$hasta" +%s)" ]; do
+                    fin=$(date -u -d "$v +1 day" +%Y-%m-%dT00:00:00Z)
+                    influx query "from(bucket:\"telemetry\")
+                        |> range(start: $v, stop: $fin)
+                        |> drop(columns:[\"_start\",\"_stop\"])" --raw >> $out
+                    v=$fin
+                  done
+                  echo "volcado hasta $hasta, $(wc -l < $out) lineas"
+
+                  gzip $out
                   ls -la /backup
               volumeMounts:
                 - name: backup
