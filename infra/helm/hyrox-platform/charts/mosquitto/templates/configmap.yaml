@@ -25,6 +25,15 @@ data:
 
     max_connections -1
 
+    # Ventana de mensajes QoS 1 entregados y aún sin confirmar por cada cliente
+    # suscriptor. El valor por defecto (20) acota el caudal hacia cada réplica
+    # del procesador a esa ventana dividida entre el tiempo de confirmación, con
+    # independencia de la CPU disponible, y era el techo real de la plataforma:
+    # con 20, el pico de diseño daba 19,5 s de latencia de transporte y un 1,4 %
+    # de pérdida; con 500, 114 ms y un 0,07 % en la misma carga (evaluación del
+    # 6 de agosto de 2026, results/20260806_peak).
+    max_inflight_messages 500
+
     # Listener externo: TLS del servidor, contraseña por cliente y ACL que
     # ata cada atleta a su propio topic. Es el único que publica el Service.
     listener 8883
