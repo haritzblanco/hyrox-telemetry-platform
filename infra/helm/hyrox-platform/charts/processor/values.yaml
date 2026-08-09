@@ -1,4 +1,4 @@
-image: registry.digitalocean.com/haritzblanco/hyrox:processor-0.6.0
+image: registry.digitalocean.com/haritzblanco/hyrox:processor-0.7.0
 shareGroup: processors
 logLevel: INFO
 # Puerto donde el procesador sirve /metrics. Prometheus descubre el pod por las
