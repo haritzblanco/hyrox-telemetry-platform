@@ -78,7 +78,12 @@ spec:
                 - |
                   set -e
                   rclone copy /backup VPS:{{ .Values.backup.sftp.path }} -v
-                  rclone delete VPS:{{ .Values.backup.sftp.path }} --min-age {{ .Values.backup.retentionHours }}h -v || true
+                  # El filtro acota el borrado a los propios backups. `rclone
+                  # delete` recorre todo el arbol, y el destino coincidia con el
+                  # directorio personal del usuario de SFTP: el 2026-08-06 la
+                  # retencion se llevo por antiguedad su .ssh/authorized_keys y
+                  # dejo el backup sin poder autenticarse hasta el 2026-08-09.
+                  rclone delete VPS:{{ .Values.backup.sftp.path }} --min-age {{ .Values.backup.retentionHours }}h --include "telemetry-*.csv.gz" -v || true
                   rclone ls VPS:{{ .Values.backup.sftp.path }}
               volumeMounts:
                 - name: backup
