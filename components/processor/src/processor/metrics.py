@@ -146,6 +146,29 @@ def _stdout_emit(line: str) -> None:
     sys.stdout.flush()
 
 
+class MetricsFanout:
+    """Reparte cada medida entre varios destinos.
+
+    Las ventanas JSON y el endpoint de Prometheus consumen los mismos hechos,
+    así que quien mide llama una sola vez y no necesita saber cuántos escuchan.
+    """
+
+    def __init__(self, sinks: list) -> None:
+        self._sinks = sinks
+
+    def record_consume(self, latency_ms: float) -> None:
+        for sink in self._sinks:
+            sink.record_consume(latency_ms)
+
+    def record_persist(self, latencies_ms: list[float]) -> None:
+        for sink in self._sinks:
+            sink.record_persist(latencies_ms)
+
+    def record_errors(self, n: int) -> None:
+        for sink in self._sinks:
+            sink.record_errors(n)
+
+
 class PersistenceTracker:
     """Empareja cada punto encolado con la confirmación de su lote.
 

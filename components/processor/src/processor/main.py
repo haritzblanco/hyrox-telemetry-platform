@@ -10,7 +10,8 @@ import uuid
 from datetime import datetime, timezone
 
 from processor.consumer import MqttConsumer
-from processor.metrics import Metrics
+from processor.metrics import Metrics, MetricsFanout
+from processor.promexport import PrometheusExporter
 from processor.writer import InfluxWriter
 
 
@@ -71,6 +72,11 @@ def parse_args() -> argparse.Namespace:
              "en JSON, para la evaluación experimental. 0 (def) = desactivado.",
     )
     parser.add_argument(
+        "--metrics-port", type=int, default=0,
+        help="Puerto en el que servir /metrics para Prometheus, con las latencias "
+             "y los recuentos acumulados desde el arranque. 0 (def) = desactivado.",
+    )
+    parser.add_argument(
         "--metrics-tag", default="",
         help="Etiqueta libre que se incluye en cada línea de métricas (p.ej. el "
              "identificador de la corrida: réplicas y carga).",
@@ -95,19 +101,28 @@ def main() -> None:
         Metrics(interval_s=args.metrics_interval, tag=args.metrics_tag, client_id=client_id)
         if args.metrics_interval > 0 else None
     )
+    exporter = PrometheusExporter(replica=client_id) if args.metrics_port > 0 else None
+    if exporter is not None:
+        exporter.serve(args.metrics_port)
+        logger.info("Métricas de Prometheus en el puerto %d", args.metrics_port)
+
+    # Un solo destino se usa tal cual; con los dos activos el fanout los alimenta
+    # desde los mismos puntos de medida.
+    sinks = [s for s in (metrics, exporter) if s is not None]
+    sink = sinks[0] if len(sinks) == 1 else (MetricsFanout(sinks) if sinks else None)
 
     with InfluxWriter(
         url=args.influx_url, token=args.influx_token,
         org=args.influx_org, bucket=args.influx_bucket,
-        metrics=metrics,
+        metrics=sink,
     ) as writer:
 
         def handle(reading: dict) -> None:
             nonlocal count
-            if metrics is not None:
+            if sink is not None:
                 latency = _transport_latency_ms(reading)
                 if latency is not None:
-                    metrics.record_consume(latency)
+                    sink.record_consume(latency)
             writer.write(reading)
             count += 1
             if count % 50 == 0:
@@ -134,3 +149,5 @@ def main() -> None:
             finally:
                 if metrics is not None:
                     metrics.stop()
+                if exporter is not None:
+                    exporter.stop()

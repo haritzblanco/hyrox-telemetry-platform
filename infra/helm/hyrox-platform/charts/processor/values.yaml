@@ -1,6 +1,10 @@
 image: registry.digitalocean.com/haritzblanco/hyrox:processor-0.6.0
 shareGroup: processors
 logLevel: INFO
+# Puerto donde el procesador sirve /metrics. Prometheus descubre el pod por las
+# anotaciones del Deployment y de ahí salen los paneles de latencia y pérdida,
+# que hasta ahora solo existían en las líneas JSON del arnés.
+metricsPort: 9100
 resources:
   requests:
     # 200m es la capacidad nominal medida de una réplica (~195 mCPU
