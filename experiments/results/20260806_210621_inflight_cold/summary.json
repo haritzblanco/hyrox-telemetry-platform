@@ -1,0 +1,63 @@
+{
+  "run": {
+    "run": "peak",
+    "athletes": 40,
+    "speedup": 20,
+    "target_rate_msg_s": 800,
+    "scaling": "keda",
+    "session": "peak_210621",
+    "start": "2026-08-06T21:06:21+00:00",
+    "end": "2026-08-06T21:10:16+00:00",
+    "enqueued": 159787,
+    "offered": 159787,
+    "delivered": 159669
+  },
+  "loss_pct": 0.074,
+  "lat_transport_ms": {
+    "n": 159787,
+    "mean": 105.9,
+    "p95": 114.4,
+    "p99": 129.0,
+    "p95_worst": 259.8,
+    "max": 586.1
+  },
+  "lat_persist_ms": {
+    "n": 159669,
+    "mean": 443.4,
+    "p95": 682.4,
+    "p99": 740.9,
+    "p95_worst": 3756.7,
+    "max": 524358.4
+  },
+  "lat_e2e_p95_upper_ms": 796.8,
+  "consumed": 159787,
+  "acked": 159669,
+  "write_errors": 0,
+  "pods": [
+    "processor-86bcb8fdc5-57tgb",
+    "processor-86bcb8fdc5-9l55q",
+    "processor-86bcb8fdc5-gv7ph",
+    "processor-86bcb8fdc5-scfk7"
+  ],
+  "replica_timeline": [
+    {
+      "ts": "21:06:21",
+      "replicas": 1,
+      "keda_metric": "0"
+    },
+    {
+      "ts": "21:06:43",
+      "replicas": 2,
+      "keda_metric": "180219m"
+    },
+    {
+      "ts": "21:07:34",
+      "replicas": 4,
+      "keda_metric": "251359m"
+    }
+  ],
+  "thresholds": {
+    "lat_p95_ms": 2000.0,
+    "loss_pct": 0.5
+  }
+}
