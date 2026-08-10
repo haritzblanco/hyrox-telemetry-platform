@@ -49,3 +49,39 @@ def test_excepcion_del_callback_no_propaga(lectura):
     c = _consumer(on_reading=explota)
     # El bucle de red de paho no debe caerse por un mensaje problemático.
     c._on_message(None, None, _msg(json.dumps(lectura).encode()))
+
+
+def test_reintenta_hasta_que_el_broker_acepta(monkeypatch):
+    intentos = []
+
+    def connect(host, port):
+        intentos.append((host, port))
+        if len(intentos) < 3:
+            raise ConnectionRefusedError(61, "Connection refused")
+
+    c = _consumer()
+    monkeypatch.setattr(c._client, "connect", connect)
+    monkeypatch.setattr("processor.consumer.time.sleep", lambda _: None)
+
+    with c:
+        pass
+
+    assert len(intentos) == 3
+
+
+def test_desiste_si_el_broker_nunca_responde(monkeypatch):
+    def connect(host, port):
+        raise ConnectionRefusedError(61, "Connection refused")
+
+    # Un plazo corto basta: lo que se comprueba es que la espera está acotada y
+    # el error acaba propagando, no cuánto se espera.
+    c = _consumer(connect_timeout=2.0)
+    monkeypatch.setattr(c._client, "connect", connect)
+    monkeypatch.setattr("processor.consumer.time.sleep", lambda _: None)
+
+    try:
+        with c:
+            pass
+    except ConnectionRefusedError:
+        return
+    raise AssertionError("se esperaba que el error propagase")
