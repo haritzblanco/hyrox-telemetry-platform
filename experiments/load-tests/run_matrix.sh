@@ -8,9 +8,11 @@
 # carga la genera el simulador del proyecto: N atletas que publican a 1 lectura
 # por segundo de carrera acelerada `speedup` → tasa ≈ N × speedup msg/s.
 #
-# Requisitos: VMs arrancadas, imagen hyrox/processor:0.3.0 importada, Deployment
-# de experimento aplicado (experiments/load-tests/processor-exp.yaml) y
-# metrics-server operativo. Ver experiments/README.md.
+# Requisitos: VMs arrancadas, relojes sincronizados (clock_sync.sh), Deployment
+# del procesador con --metrics-interval activo y metrics-server operativo. La
+# ventana de experimento (sincronía de ArgoCD suspendida) debe estar abierta:
+# de lo contrario ArgoCD revierte tanto la instrumentación como el escalado
+# fijado. Ver experiments/README.md.
 #
 # Variables (todas con default):
 #   REPLICAS="1 2 4"           lista de nº de réplicas del processor
@@ -105,6 +107,33 @@ print('' if tot is None else tot)" 2>/dev/null | head -1)"
     echo ""
     return 1
 }
+
+# ── fijar el número de réplicas ─────────────────────────────────────────────
+# Con KEDA desplegado no basta `kubectl scale`: el HPA que gestiona el
+# ScaledObject devuelve el Deployment a la cuenta que dicta el disparador en
+# cuanto pasa su periodo de sondeo, y la corrida acaba midiendo una topología
+# distinta de la que dice el dataset. La anotación `paused-replicas` congela el
+# autoescalado en el valor pedido, que es la única forma de garantizar que la
+# celda R×N se mide con R réplicas de principio a fin.
+pin_replicas() {
+    local R="$1"
+    if kubectl get scaledobject/processor -n "$NS" >/dev/null 2>&1; then
+        kubectl annotate scaledobject/processor -n "$NS" \
+            "autoscaling.keda.sh/paused-replicas=$R" --overwrite >/dev/null
+    fi
+    kubectl scale deployment/processor -n "$NS" --replicas="$R" >/dev/null
+    kubectl rollout status deployment/processor -n "$NS" --timeout=120s
+}
+
+# Al terminar (o si se interrumpe la tanda) se devuelve el autoescalado a KEDA:
+# dejar la anotación puesta congelaría la plataforma en la última celda medida.
+unpin_replicas() {
+    if kubectl get scaledobject/processor -n "$NS" >/dev/null 2>&1; then
+        kubectl annotate scaledobject/processor -n "$NS" \
+            autoscaling.keda.sh/paused-replicas- >/dev/null 2>&1 || true
+    fi
+}
+trap unpin_replicas EXIT
 
 # ── una corrida (R réplicas, N atletas) ─────────────────────────────────────
 run_one() {
@@ -203,8 +232,7 @@ if [[ -n "${SEQUENCE:-}" ]]; then
         idx=$((idx + 1))
         if [[ "$R" != "$current_r" ]]; then
             echo "### Escalando processor a $R réplica(s) ###"
-            kubectl scale deployment/processor -n "$NS" --replicas="$R" >/dev/null
-            kubectl rollout status deployment/processor -n "$NS" --timeout=120s
+            pin_replicas "$R"
             sleep "$SETTLE"
             current_r="$R"
         fi
@@ -219,8 +247,7 @@ if [[ -n "${SEQUENCE:-}" ]]; then
 else
     for R in $REPLICAS; do
         echo "### Escalando processor a $R réplica(s) ###"
-        kubectl scale deployment/processor -n "$NS" --replicas="$R" >/dev/null
-        kubectl rollout status deployment/processor -n "$NS" --timeout=120s
+        pin_replicas "$R"
         sleep "$SETTLE"
         for N in $N_LIST; do
             run_one "$R" "$N"
