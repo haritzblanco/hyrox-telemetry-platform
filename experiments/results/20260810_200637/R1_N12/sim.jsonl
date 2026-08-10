@@ -1,0 +1,12 @@
+{"kind": "sim", "athlete_id": "atleta-001", "session_id": "exp_R1_N12_201005", "published": 3989, "acked": 3989, "ack_latency_ms": {"n": 3989, "mean": 5.0, "p50": 4.4, "p95": 8.97, "p99": 13.91, "max": 113.01}}
+{"kind": "sim", "athlete_id": "atleta-002", "session_id": "exp_R1_N12_201005", "published": 3956, "acked": 3956, "ack_latency_ms": {"n": 3956, "mean": 5.14, "p50": 4.54, "p95": 8.94, "p99": 13.91, "max": 113.1}}
+{"kind": "sim", "athlete_id": "atleta-003", "session_id": "exp_R1_N12_201005", "published": 4029, "acked": 4029, "ack_latency_ms": {"n": 4029, "mean": 5.16, "p50": 4.57, "p95": 8.84, "p99": 13.38, "max": 109.28}}
+{"kind": "sim", "athlete_id": "atleta-004", "session_id": "exp_R1_N12_201005", "published": 3911, "acked": 3911, "ack_latency_ms": {"n": 3911, "mean": 5.28, "p50": 4.68, "p95": 9.01, "p99": 12.98, "max": 107.98}}
+{"kind": "sim", "athlete_id": "atleta-005", "session_id": "exp_R1_N12_201005", "published": 3988, "acked": 3988, "ack_latency_ms": {"n": 3988, "mean": 5.36, "p50": 4.77, "p95": 9.05, "p99": 13.26, "max": 109.71}}
+{"kind": "sim", "athlete_id": "atleta-006", "session_id": "exp_R1_N12_201005", "published": 3991, "acked": 3991, "ack_latency_ms": {"n": 3991, "mean": 5.45, "p50": 4.86, "p95": 8.92, "p99": 13.2, "max": 108.6}}
+{"kind": "sim", "athlete_id": "atleta-007", "session_id": "exp_R1_N12_201005", "published": 4030, "acked": 4030, "ack_latency_ms": {"n": 4030, "mean": 5.54, "p50": 4.93, "p95": 9.17, "p99": 13.71, "max": 109.77}}
+{"kind": "sim", "athlete_id": "atleta-008", "session_id": "exp_R1_N12_201005", "published": 4113, "acked": 4113, "ack_latency_ms": {"n": 4113, "mean": 5.65, "p50": 5.04, "p95": 9.55, "p99": 14.72, "max": 108.52}}
+{"kind": "sim", "athlete_id": "atleta-009", "session_id": "exp_R1_N12_201005", "published": 4061, "acked": 4061, "ack_latency_ms": {"n": 4061, "mean": 5.79, "p50": 5.15, "p95": 9.7, "p99": 15.06, "max": 107.67}}
+{"kind": "sim", "athlete_id": "atleta-010", "session_id": "exp_R1_N12_201005", "published": 4006, "acked": 4006, "ack_latency_ms": {"n": 4006, "mean": 5.9, "p50": 5.21, "p95": 9.85, "p99": 15.68, "max": 108.98}}
+{"kind": "sim", "athlete_id": "atleta-011", "session_id": "exp_R1_N12_201005", "published": 3932, "acked": 3932, "ack_latency_ms": {"n": 3932, "mean": 6.0, "p50": 5.31, "p95": 10.14, "p99": 16.54, "max": 107.88}}
+{"kind": "sim", "athlete_id": "atleta-012", "session_id": "exp_R1_N12_201005", "published": 3940, "acked": 3940, "ack_latency_ms": {"n": 3940, "mean": 5.96, "p50": 5.22, "p95": 10.23, "p99": 17.41, "max": 107.61}}
