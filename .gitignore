@@ -23,9 +23,15 @@ Thumbs.db
 .env
 *.local.yaml
 secrets/
+# Fichero de bloqueo de las skills del asistente: es del entorno de trabajo,
+# no del proyecto.
+skills-lock.json
 
 # Resultados pesados o sensibles
 data/fit-samples/*.fit
+# Copia de la version anterior del perfil de calibracion, que deja
+# build_profile_from_fit.py al regenerarlo: se reconstruye desde el .fit.
+data/fit-samples/.hyrox_profile.prev.json
 experiments/results/*.csv
 !experiments/results/.gitkeep
 
