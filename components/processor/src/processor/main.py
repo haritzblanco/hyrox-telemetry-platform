@@ -135,6 +135,11 @@ def main() -> None:
             username=args.broker_username, password=args.broker_password,
             ca_certs=args.broker_ca,
         )
+        # Desde aquí /readyz refleja el estado real de la suscripción. Antes de
+        # este punto responde que no, que es lo que corresponde mientras el
+        # consumidor espera a que el broker acepte la conexión.
+        if exporter is not None:
+            exporter.ready_check = consumer.is_connected
         # SIGTERM sigue el camino de Ctrl-C para vaciar los lotes pendientes al salir.
         signal.signal(signal.SIGTERM, lambda *_: (_ for _ in ()).throw(KeyboardInterrupt))
 

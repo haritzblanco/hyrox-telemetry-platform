@@ -18,6 +18,17 @@ CONNECT_TIMEOUT_S = 60.0
 CONNECT_BACKOFF_MAX_S = 8.0
 
 
+def _es_fallo(reason_code) -> bool:
+    """Si el código de respuesta del broker indica rechazo.
+
+    En MQTT 5 paho entrega objetos ReasonCode; en MQTT 3.1.1, enteros con el QoS
+    concedido (128 si rechaza). Se admiten ambas formas.
+    """
+    if hasattr(reason_code, "is_failure"):
+        return bool(reason_code.is_failure)
+    return int(reason_code) >= 128
+
+
 class MqttConsumer:
     """Se suscribe a un topic MQTT y entrega cada mensaje a un callback."""
 
@@ -46,6 +57,9 @@ class MqttConsumer:
         self.share_group = share_group
         self.subscribe_topic = f"$share/{share_group}/{topic}" if share_group else topic
         self._on_reading = on_reading
+        # Suscripción aceptada por el broker, que es lo que hace a esta réplica
+        # capaz de consumir. La sonda de disponibilidad del pod lo consulta.
+        self._suscrito = False
         self._client = mqtt.Client(
             mqtt.CallbackAPIVersion.VERSION2,
             client_id=client_id,
@@ -61,7 +75,18 @@ class MqttConsumer:
         # es él quien se está reiniciando.
         self._client.reconnect_delay_set(min_delay=1, max_delay=int(CONNECT_BACKOFF_MAX_S))
         self._client.on_connect = self._on_connect
+        self._client.on_subscribe = self._on_subscribe
+        self._client.on_disconnect = self._on_disconnect
         self._client.on_message = self._on_message
+
+    def is_connected(self) -> bool:
+        """Si la réplica tiene la suscripción activa y, por tanto, consume.
+
+        No basta con que la conexión TCP esté en pie: hasta que el broker no
+        concede la suscripción compartida no llega ninguna lectura, así que es
+        esa concesión la que marca a la réplica como disponible.
+        """
+        return self._suscrito
 
     def __enter__(self) -> Self:
         logger.info("Conectando al broker MQTT en %s:%d", self.host, self.port)
@@ -110,7 +135,26 @@ class MqttConsumer:
             logger.info("Conectado al broker. Suscribiendo a %s", self.subscribe_topic)
             client.subscribe(self.subscribe_topic, qos=self.qos)
         else:
+            self._suscrito = False
             logger.error("Error de conexión MQTT: %s", reason_code)
+
+    def _on_subscribe(self, client, userdata, mid, reason_code_list, properties):
+        concedida = any(not _es_fallo(rc) for rc in reason_code_list)
+        self._suscrito = concedida
+        if concedida:
+            logger.info("Suscripción concedida a %s", self.subscribe_topic)
+        else:
+            logger.error(
+                "El broker rechazó la suscripción a %s: %s",
+                self.subscribe_topic, reason_code_list,
+            )
+
+    def _on_disconnect(self, client, userdata, flags, reason_code, properties):
+        # Mientras dure la caída la réplica no consume, aunque paho reintente
+        # por su cuenta. La suscripción vuelve con el on_subscribe del reintento.
+        self._suscrito = False
+        if reason_code != 0:
+            logger.warning("Desconectado del broker: %s. Reintentando.", reason_code)
 
     def _on_message(self, client, userdata, msg):
         try:

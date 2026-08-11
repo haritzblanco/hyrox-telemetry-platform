@@ -90,6 +90,26 @@ spec:
           ports:
             - name: metrics
               containerPort: {{ .Values.metricsPort }}
+          # Vida del proceso, deliberadamente ajena al broker: si la sonda
+          # dependiera de la conexión, una caída del broker reiniciaría a la vez
+          # todas las réplicas, que es justo cuando conviene que sigan en pie
+          # reintentando. De eso ya se ocupa el reintento del consumidor.
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: metrics
+            initialDelaySeconds: 5
+            periodSeconds: 20
+          # Disponibilidad: solo cuenta como lista la réplica cuya suscripción
+          # compartida ha aceptado el broker, que es la que consume. Marca el
+          # fin del despliegue y deja fuera del promedio de CPU del HPA a las
+          # réplicas que aún están conectando, durante el arranque en frío.
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: metrics
+            initialDelaySeconds: 2
+            periodSeconds: 5
           volumeMounts:
             - name: mqtt-ca
               mountPath: /etc/mqtt-ca

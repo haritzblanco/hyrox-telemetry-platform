@@ -51,6 +51,33 @@ def test_excepcion_del_callback_no_propaga(lectura):
     c._on_message(None, None, _msg(json.dumps(lectura).encode()))
 
 
+def test_no_esta_disponible_hasta_que_se_concede_la_suscripcion():
+    c = _consumer(share_group="processors")
+    assert not c.is_connected()
+    c._on_subscribe(None, None, 1, [1], None)
+    assert c.is_connected()
+
+
+def test_una_suscripcion_rechazada_no_marca_disponible():
+    c = _consumer()
+    c._on_subscribe(None, None, 1, [128], None)
+    assert not c.is_connected()
+
+
+def test_la_desconexion_retira_la_disponibilidad():
+    c = _consumer()
+    c._on_subscribe(None, None, 1, [1], None)
+    c._on_disconnect(None, None, None, 7, None)
+    assert not c.is_connected()
+
+
+def test_una_conexion_rechazada_retira_la_disponibilidad():
+    c = _consumer()
+    c._on_subscribe(None, None, 1, [1], None)
+    c._on_connect(None, None, None, 5, None)
+    assert not c.is_connected()
+
+
 def test_reintenta_hasta_que_el_broker_acepta(monkeypatch):
     intentos = []
 

@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from typing import Callable
 
 # Los límites cubren desde la decena de milisegundos hasta la decena de
 # segundos. El de 2 s no es casual: es el umbral del requisito de latencia
@@ -90,10 +91,22 @@ class PrometheusExporter:
     Ofrece la misma interfaz de registro que Metrics (record_consume,
     record_persist y record_errors), de modo que ambos destinos se pueden
     alimentar a la vez sin que quien mide sepa cuántos hay escuchando.
+
+    Sirve además las dos rutas que consultan las sondas de Kubernetes:
+    /healthz, que responde mientras el proceso viva, y /readyz, que delega en
+    ready_check para decir si esta réplica consume de verdad.
     """
 
-    def __init__(self, replica: str = "") -> None:
+    def __init__(
+        self,
+        replica: str = "",
+        ready_check: Callable[[], bool] | None = None,
+    ) -> None:
         self.replica = replica
+        # Sin comprobación instalada la réplica se declara no disponible: entre
+        # que el servidor arranca y el consumidor existe hay una ventana en la
+        # que nada consume, y anunciarla como lista sería mentir.
+        self.ready_check = ready_check
         self.transport = Histogram()
         self.persist = Histogram()
         self.consumed = Counter()
@@ -143,8 +156,17 @@ class PrometheusExporter:
 
         class _Handler(BaseHTTPRequestHandler):
             def do_GET(self):
-                if self.path not in ("/metrics", "/healthz"):
+                if self.path not in ("/metrics", "/healthz", "/readyz"):
                     self.send_error(404)
+                    return
+                if self.path == "/readyz":
+                    listo = exporter.ready_check is not None and exporter.ready_check()
+                    body = (b"ready\n" if listo else b"sin suscripcion al broker\n")
+                    self.send_response(200 if listo else 503)
+                    self.send_header("Content-Type", "text/plain")
+                    self.send_header("Content-Length", str(len(body)))
+                    self.end_headers()
+                    self.wfile.write(body)
                     return
                 body = (exporter.render() if self.path == "/metrics" else "ok\n").encode()
                 self.send_response(200)

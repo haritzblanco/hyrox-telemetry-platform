@@ -109,6 +109,23 @@ class TestServidor:
         with urllib.request.urlopen(self._url(exporter, "/healthz"), timeout=5) as r:
             assert r.status == 200
 
+    def test_readyz_sin_comprobacion_responde_503(self, exporter):
+        with pytest.raises(urllib.error.HTTPError) as exc:
+            urllib.request.urlopen(self._url(exporter, "/readyz"), timeout=5)
+        assert exc.value.code == 503
+
+    def test_readyz_sigue_a_la_comprobacion(self, exporter):
+        listo = False
+        exporter.ready_check = lambda: listo
+
+        with pytest.raises(urllib.error.HTTPError) as exc:
+            urllib.request.urlopen(self._url(exporter, "/readyz"), timeout=5)
+        assert exc.value.code == 503
+
+        listo = True
+        with urllib.request.urlopen(self._url(exporter, "/readyz"), timeout=5) as r:
+            assert r.status == 200
+
     def test_otras_rutas_dan_404(self, exporter):
         with pytest.raises(urllib.error.HTTPError) as exc:
             urllib.request.urlopen(self._url(exporter, "/otra"), timeout=5)
