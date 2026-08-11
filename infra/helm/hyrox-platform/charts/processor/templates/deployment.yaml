@@ -94,11 +94,13 @@ spec:
           # dependiera de la conexión, una caída del broker reiniciaría a la vez
           # todas las réplicas, que es justo cuando conviene que sigan en pie
           # reintentando. De eso ya se ocupa el reintento del consumidor.
+          # El interprete tarda unos cinco segundos en levantar el servidor, asi
+          # que las primeras consultas se retrasan hasta pasado ese arranque.
           livenessProbe:
             httpGet:
               path: /healthz
               port: metrics
-            initialDelaySeconds: 5
+            initialDelaySeconds: 15
             periodSeconds: 20
           # Disponibilidad: solo cuenta como lista la réplica cuya suscripción
           # compartida ha aceptado el broker, que es la que consume. Marca el
@@ -108,7 +110,7 @@ spec:
             httpGet:
               path: /readyz
               port: metrics
-            initialDelaySeconds: 2
+            initialDelaySeconds: 8
             periodSeconds: 5
           volumeMounts:
             - name: mqtt-ca
