@@ -142,3 +142,41 @@ def test_lote_fallido_cuenta_errores_y_desalinea(writer_con_metricas, lectura):
     assert metrics.total_errors == 2
     assert metrics.total_acked == 0
     assert len(writer._tracker._pending) == 0
+
+
+class TestPendientesTrasConfirmar:
+    def test_el_writer_publica_el_tamano_de_la_cola(self, monkeypatch):
+        """Cada confirmación informa de cuántas marcas quedan sin emparejar."""
+        from processor.writer import InfluxWriter
+
+        registradas = []
+
+        class SinkFalso:
+            def record_consume(self, latency_ms): pass
+            def record_persist(self, latencies_ms): pass
+            def record_errors(self, n): pass
+            def record_pending(self, n): registradas.append(n)
+
+        monkeypatch.setattr("processor.writer.InfluxDBClient", lambda **kw: _ClienteFalso())
+        w = InfluxWriter(url="http://x", token="t", org="o", bucket="b", metrics=SinkFalso())
+        for _ in range(10):
+            w._tracker.on_enqueue()
+        # El lote confirma siete de los diez encolados: tres quedan atrapados.
+        w._on_success(None, "\n".join("linea" for _ in range(7)))
+        assert registradas == [3]
+
+
+class _ClienteFalso:
+    def write_api(self, **kwargs):
+        return _WriteApiFalso()
+
+    def close(self):
+        pass
+
+
+class _WriteApiFalso:
+    def write(self, **kwargs):
+        pass
+
+    def close(self):
+        pass

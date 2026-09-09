@@ -78,6 +78,7 @@ class Metrics:
         self._win_consumed = 0
         self._win_acked = 0
         self._win_errors = 0
+        self._win_pending: list[int] = []
         self._win_start = time.monotonic()
 
     def record_consume(self, latency_ms: float) -> None:
@@ -96,6 +97,11 @@ class Metrics:
         with self._lock:
             self._win_errors += n
             self.total_errors += n
+
+    def record_pending(self, n: int) -> None:
+        """Tamaño de la cola de marcas pendientes tras confirmarse un lote."""
+        with self._lock:
+            self._win_pending.append(n)
 
     def start(self) -> None:
         if self.interval_s <= 0:
@@ -130,6 +136,12 @@ class Metrics:
                 "thr_acked_s": round(self._win_acked / dt, 1),
                 "lat_transport_ms": _summary(self._consume_lat),
                 "lat_persist_ms": _summary(self._persist_lat),
+                # El mínimo es el dato: es el suelo que la cola no baja en toda
+                # la ventana, es decir, las marcas atrapadas. El último valor se
+                # emite al lado para poder distinguir un suelo estable de una
+                # cola que está creciendo de verdad.
+                "persist_pending_min": min(self._win_pending) if self._win_pending else None,
+                "persist_pending": self._win_pending[-1] if self._win_pending else None,
                 "total_consumed": self.total_consumed,
                 "total_acked": self.total_acked,
                 "total_errors": self.total_errors,
@@ -168,6 +180,10 @@ class MetricsFanout:
         for sink in self._sinks:
             sink.record_errors(n)
 
+    def record_pending(self, n: int) -> None:
+        for sink in self._sinks:
+            sink.record_pending(n)
+
 
 class PersistenceTracker:
     """Empareja cada punto encolado con la confirmación de su lote.
@@ -199,3 +215,19 @@ class PersistenceTracker:
         with self._lock:
             for _ in range(min(n, len(self._pending))):
                 self._pending.popleft()
+
+    def pending(self) -> int:
+        """Marcas encoladas y todavía sin confirmación de escritura.
+
+        En régimen esta cola sube y baja con cada ciclo de vaciado y vuelve a
+        rozar el cero. Un suelo permanente por encima de cero significa que hay
+        puntos que se encolaron para escritura y de los que nunca llegó
+        confirmación ni error: el cliente de InfluxDB los ha descartado en
+        silencio. Cuenta, por tanto, lecturas perdidas en el camino de
+        escritura, y explica además por qué la latencia de persistencia de esa
+        réplica sale inflada: las marcas que quedan atrapadas desplazan el
+        emparejamiento y añaden a cada medida posterior el tiempo que tardan en
+        producirse. Ver results/20260909_212221_diag_writer/validation.md.
+        """
+        with self._lock:
+            return len(self._pending)

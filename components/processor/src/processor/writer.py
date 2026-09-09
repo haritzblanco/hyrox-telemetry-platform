@@ -99,6 +99,10 @@ class InfluxWriter:
         latencies = self._tracker.on_ack(n)
         if latencies:
             self.metrics.record_persist(latencies)
+        # Tras confirmar un lote la cola debería quedar cerca de vacía. Lo que
+        # quede de forma persistente son puntos descartados en silencio por el
+        # cliente (ver PersistenceTracker.pending).
+        self.metrics.record_pending(self._tracker.pending())
 
     def _on_error(self, conf, data, exception) -> None:
         n = _count_points(data)

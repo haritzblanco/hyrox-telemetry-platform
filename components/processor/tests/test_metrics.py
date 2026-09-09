@@ -105,3 +105,47 @@ class TestPersistenceTracker:
             t.on_enqueue()
         t.on_drop(2)
         assert len(t.on_ack(10)) == 2
+
+    def test_pending_cuenta_las_marcas_sin_confirmar(self):
+        t = PersistenceTracker()
+        for _ in range(10):
+            t.on_enqueue()
+        assert t.pending() == 10
+        t.on_ack(4)
+        assert t.pending() == 6
+
+    def test_pending_delata_los_puntos_descartados_en_silencio(self):
+        """Un lote que confirma menos puntos de los encolados deja suelo.
+
+        Es la firma del descarte silencioso del cliente de InfluxDB: las marcas
+        sobrantes no se recuperan nunca y toda medida posterior sale inflada.
+        """
+        t = PersistenceTracker()
+        for _ in range(10):
+            t.on_enqueue()
+        t.on_ack(7)          # el cliente perdió tres puntos por el camino
+        assert t.pending() == 3
+        for _ in range(5):   # sigue trabajando con normalidad
+            t.on_enqueue()
+        t.on_ack(5)
+        assert t.pending() == 3   # el suelo permanece
+
+
+class TestPendientesEnLaVentana:
+    def test_la_ventana_publica_el_suelo_y_el_ultimo_valor(self):
+        emitidas = []
+        m = Metrics(interval_s=0, emit=emitidas.append)
+        for n in (7, 3, 5):
+            m.record_pending(n)
+        m._flush()
+        record = json.loads(emitidas[0])
+        assert record["persist_pending_min"] == 3
+        assert record["persist_pending"] == 5
+
+    def test_sin_medidas_los_campos_van_a_none(self):
+        emitidas = []
+        m = Metrics(interval_s=0, emit=emitidas.append)
+        m._flush()
+        record = json.loads(emitidas[0])
+        assert record["persist_pending_min"] is None
+        assert record["persist_pending"] is None

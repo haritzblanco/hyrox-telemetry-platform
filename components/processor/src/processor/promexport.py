@@ -85,6 +85,30 @@ class Counter:
         )
 
 
+class Gauge:
+    """Valor instantáneo, que puede subir y bajar."""
+
+    def __init__(self) -> None:
+        self._value = 0
+        self._lock = threading.Lock()
+
+    def set(self, n: int) -> None:
+        with self._lock:
+            self._value = n
+
+    @property
+    def value(self) -> int:
+        with self._lock:
+            return self._value
+
+    def render(self, name: str, help_text: str) -> str:
+        return (
+            f"# HELP {name} {help_text}\n"
+            f"# TYPE {name} gauge\n"
+            f"{name} {self.value}\n"
+        )
+
+
 class PrometheusExporter:
     """Acumula las métricas del procesador y las sirve por HTTP.
 
@@ -112,6 +136,7 @@ class PrometheusExporter:
         self.consumed = Counter()
         self.persisted = Counter()
         self.errors = Counter()
+        self.pending = Gauge()
         self._server: ThreadingHTTPServer | None = None
 
     def record_consume(self, latency_ms: float) -> None:
@@ -125,6 +150,9 @@ class PrometheusExporter:
 
     def record_errors(self, n: int) -> None:
         self.errors.inc(n)
+
+    def record_pending(self, n: int) -> None:
+        self.pending.set(n)
 
     def render(self) -> str:
         return "".join([
@@ -147,6 +175,11 @@ class PrometheusExporter:
             self.errors.render(
                 "hyrox_processor_write_errors_total",
                 "Puntos descartados por fallo de escritura.",
+            ),
+            self.pending.render(
+                "hyrox_processor_persist_pending",
+                "Puntos encolados sin confirmacion de escritura. Un suelo "
+                "persistente son puntos descartados en silencio.",
             ),
         ])
 
