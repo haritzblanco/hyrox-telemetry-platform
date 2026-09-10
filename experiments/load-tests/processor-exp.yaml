@@ -50,7 +50,7 @@ spec:
         - name: registry-haritzblanco
       containers:
         - name: processor
-          image: registry.digitalocean.com/haritzblanco/hyrox:processor-0.6.0
+          image: registry.digitalocean.com/haritzblanco/hyrox:processor-0.11.0
           imagePullPolicy: IfNotPresent
           env:
             - name: INFLUX_TOKEN
