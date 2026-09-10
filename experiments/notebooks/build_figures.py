@@ -177,14 +177,33 @@ def fig_perdida(df: pd.DataFrame, destino: Path) -> None:
     plt.close(fig)
 
 
-def fig_cpu(df: pd.DataFrame, destino: Path) -> None:
+def _limite_cpu(matriz: Path) -> int:
+    """Límite de CPU por réplica de la campaña, en millicores.
+
+    Las campañas estranguladas lo fijan por celda y lo dejan escrito en el
+    run.json; el resto corre con el límite de producción. Anotar 1000 m en una
+    campaña estrangulada invierte la lectura de la figura: una réplica a 247 m
+    parece holgada cuando en realidad está pegada a su cuota de 250 m.
+    """
+    limites = set()
+    for rj in matriz.glob("*/run.json"):
+        lim = json.loads(rj.read_text()).get("cpu_limit")
+        limites.add(lim)
+    limites.discard(None)
+    if len(limites) == 1:
+        crudo = limites.pop()
+        return int(crudo[:-1]) if crudo.endswith("m") else int(float(crudo) * 1000)
+    return 1000
+
+
+def fig_cpu(df: pd.DataFrame, destino: Path, limite_m: int = 1000) -> None:
     """CPU POR RÉPLICA, no total: es lo que se compara con el límite del pod."""
     fig, ax = plt.subplots(figsize=(6.4, 4.0))
     df = df.assign(cpu_por_replica=df["cpu_mean_m"] / df["replicas"])
     _series_por_replicas(ax, df, "cpu_por_replica")
     ax.set_ylabel("CPU media por réplica (millicores)")
     ax.set_ylim(bottom=0)
-    _umbral(ax, 1000, "límite del contenedor: 1000 m")
+    _umbral(ax, limite_m, f"límite del contenedor: {limite_m} m")
     ax.legend(loc="upper left")
     fig.savefig(destino)
     plt.close(fig)
@@ -395,7 +414,7 @@ def main() -> int:
     fig_latencia(df, args.out / "fig-escalado-latencia.png")
     fig_perdida(df, args.out / "fig-escalado-perdida.png")
     if df["cpu_mean_m"].notna().any():
-        fig_cpu(df, args.out / "fig-escalado-cpu.png")
+        fig_cpu(df, args.out / "fig-escalado-cpu.png", _limite_cpu(args.matrix))
     if args.peak_cold:
         fig_arranque_frio(args.peak_cold, args.out / "fig-arranque-frio.png")
     if args.peak_pre and args.peak_cold:
