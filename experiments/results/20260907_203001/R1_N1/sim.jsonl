@@ -1,0 +1,1 @@
+{"kind": "sim", "athlete_id": "atleta-001", "session_id": "exp_R1_N1_212310", "published": 3942, "acked": 3942, "ack_latency_ms": {"n": 3942, "mean": 4.13, "p50": 3.92, "p95": 5.88, "p99": 7.97, "max": 89.63}}

@@ -1,0 +1,28 @@
+=== A. sin competencia, switch por defecto ===
+PERDIDOS      5  (0.042 %)
+  a ventana ya cerrada      5
+  a ventana sin suscriptor  0
+
+=== B. 4 quemadores, switch por defecto ===
+PERDIDOS      447  (3.725 %)
+  a ventana ya cerrada      447
+  a ventana sin suscriptor  0
+
+=== C. 4 quemadores, switch 1us ===
+PERDIDOS      1110  (9.250 %)
+  a ventana ya cerrada      786
+  a ventana sin suscriptor  325
+
+=== D. C pero sin temporizador (flush 600 s: solo cierra la cuenta) ===
+PERDIDOS      0  (0.000 %)
+  a ventana ya cerrada      0
+  a ventana sin suscriptor  0
+
+(la corrida D se interrumpio tras imprimir su resultado: con flush_interval
+de 600 s el temporizador pendiente bloquea el cierre del cliente)
+
+=== E. solo cierra el temporizador (batch 10M) ===
+PERDIDOS      1119  (9.325 %)
+  a ventana ya cerrada      803
+  a ventana sin suscriptor  314
+duracion 15.0 s -> 800 msg/s

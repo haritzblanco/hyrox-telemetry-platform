@@ -1,0 +1,17 @@
+{
+  "run": "failover",
+  "athletes": 40,
+  "speedup": 20,
+  "target_rate_msg_s": 800,
+  "replicas": 2,
+  "cpu_limit": null,
+  "killed_pod": "processor-54d87668b6-5s8z7",
+  "kill_at_s": 90,
+  "kill_ts": "2026-09-08T07:20:16+00:00",
+  "session": "failover_071810",
+  "start": "2026-09-08T07:18:46+00:00",
+  "end": "2026-09-08T07:22:39+00:00",
+  "enqueued": 159787,
+  "offered": 159787,
+  "delivered": 158919
+}

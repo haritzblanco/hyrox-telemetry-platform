@@ -1,0 +1,15 @@
+{
+  "run": "R4_N1",
+  "replicas": 4,
+  "athletes": 1,
+  "speedup": 50,
+  "target_rate_msg_s": 50,
+  "session": "exp_R4_N1_213150",
+  "cpu_limit": "150m",
+  "start": "2026-09-07T21:31:50+00:00",
+  "end": "2026-09-07T21:33:40+00:00",
+  "enqueued": 3942,
+  "offered": 3942,
+  "delivered": 3940,
+  "drain_s": 27
+}

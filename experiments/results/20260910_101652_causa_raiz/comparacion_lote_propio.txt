@@ -1,0 +1,18 @@
+### lote del cliente (antes)
+PERDIDOS       1148  (9.567 %)
+  a ventana ya cerrada      829
+  a ventana sin suscriptor  323
+
+### lote propio (despues), mismas condiciones
+confirmados  12000
+errores      0
+PERDIDOS     0  (0.000 %)
+persistencia p50 266.9 ms  p95 493.4 ms
+
+### lote propio, 8 quemadores
+confirmados  12000
+errores      0
+PERDIDOS     0  (0.000 %)
+persistencia p50 274.0 ms  p95 511.1 ms
+
+

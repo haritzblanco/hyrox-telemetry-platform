@@ -1,0 +1,14 @@
+{
+  "run": "peak",
+  "athletes": 15,
+  "speedup": 20,
+  "target_rate_msg_s": 300,
+  "scaling": "keda",
+  "cpu_limit": "150m",
+  "session": "peak_213611",
+  "start": "2026-09-07T21:37:01+00:00",
+  "end": "2026-09-07T23:51:21+00:00",
+  "enqueued": 56189,
+  "offered": 60056,
+  "delivered": 5118
+}

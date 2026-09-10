@@ -1,0 +1,12 @@
+── k3s-hyrox ────────────────────────────────────
+k3s-hyrox: NTPSynchronized=yes
+k3s-hyrox: offset crudo (VM − Mac) ≈ +316.5 ms  [mejor de 7, RTT 353 ms]
+k3s-hyrox: nota — el offset crudo incluye overhead de `multipass exec`; la sincronía real la confirma NTPSynchronized de arriba.
+── hyrox-worker ────────────────────────────────────
+hyrox-worker: NTPSynchronized=yes
+hyrox-worker: offset crudo (VM − Mac) ≈ +275.2 ms  [mejor de 7, RTT 303 ms]
+hyrox-worker: nota — el offset crudo incluye overhead de `multipass exec`; la sincronía real la confirma NTPSynchronized de arriba.
+── hyrox-worker2 ────────────────────────────────────
+hyrox-worker2: NTPSynchronized=yes
+hyrox-worker2: offset crudo (VM − Mac) ≈ +251.5 ms  [mejor de 7, RTT 308 ms]
+hyrox-worker2: nota — el offset crudo incluye overhead de `multipass exec`; la sincronía real la confirma NTPSynchronized de arriba.
