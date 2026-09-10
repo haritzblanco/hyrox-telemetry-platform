@@ -34,19 +34,38 @@ cruzarlo, porque a los 23 s valía 134,7 msg/s.
 
 Con las dos piezas, llegar a cuatro réplicas cuesta **65 s en vez de 84**.
 
-## La pérdida de estas corridas no es comparable entre sí
+## Cuatro repeticiones de cada configuración
 
-Las cifras de pérdida van de 16 % a 34 % sin seguir al tiempo de escalado, y la
-razón es conocida: con 250 m una réplica rinde 191 msg/s o se descuelga, y de qué
-lado cae depende de transitorios. En la primera corrida las cuatro réplicas
-trabajaron entre el 56 y el 97 % de su cuota y el broker llegó a entregar
-767 msg/s; en la segunda y la tercera se quedaron clavadas en el 99-100 %. La
-pérdida mide sobre todo eso.
+Una corrida por configuración no bastaba: con 250 m una réplica rinde 191 msg/s o
+se descuelga, y de qué lado cae depende de transitorios. Se repitieron las dos
+configuraciones extremas cuatro veces cada una, alternando solo la imagen del
+exportador y el objetivo del disparador.
 
-**El tiempo de escalado sí es comparable**, porque no depende del régimen en que
-caigan las réplicas sino de cuándo decide KEDA, y es la magnitud que estas
-corridas acotan. Para comparar pérdidas haría falta repetir cada configuración
-varias veces y quedarse con la distribución, no con una corrida.
+| | base (media de 1 min, objetivo 400) | arreglado (derivada, objetivo 150) |
+|---|---|---|
+| 2 réplicas (mediana) | 44 s | **28 s** |
+| 4 réplicas (mediana) | 118 s | **60 s** |
+| 4 réplicas (todas) | 72, 112, 125, 149 s | 46, 55, 65, 66 s |
+| Pérdida (media) | 23,6 % | 20,8 % |
+| Pérdida (todas) | 16,1 / 21,8 / 25,3 / 31,1 % | 16,7 / 21,3 / 22,1 / 22,9 % |
+
+**El tiempo de escalado mejora sin ambigüedad.** Las cuatro corridas arregladas
+alcanzan las cuatro réplicas antes que cualquiera de las cuatro de base: los dos
+conjuntos no se solapan. La mediana pasa de 118 s a 60 s, algo menos de la mitad.
+
+**La pérdida no permite afirmar tanto.** La media baja del 23,6 % al 20,8 % y la
+dispersión se reduce mucho, de quince puntos de rango a seis, pero las dos
+distribuciones se solapan y con cuatro corridas por configuración esa diferencia
+de tres puntos no se sostiene. Lo que sí queda claro es que **la corrida original
+de la base, con su 16,1 %, era la más afortunada de su grupo**: también fue la
+más rápida en escalar, 72 s frente a una mediana de 118. Sacar conclusiones de
+ella habría sido un error.
+
+La razón de que la pérdida no siga al tiempo de escalado es la biestabilidad de
+la réplica estrangulada: en las corridas buenas las cuatro réplicas trabajan
+entre el 56 y el 97 % de su cuota y el broker llega a entregar 767 msg/s; en las
+malas se quedan clavadas en el 99-100 % y entregan bastante menos. Esa lotería
+pesa más en la pérdida que los segundos que tarde el autoescalador.
 
 ## Qué se cambió
 
