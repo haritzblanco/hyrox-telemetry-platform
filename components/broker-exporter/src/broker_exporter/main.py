@@ -1,11 +1,19 @@
 """Expone por HTTP el caudal de publicaciones del broker.
 
-Mosquitto publica en $SYS/broker/load/publish/received/1min una media
-móvil del número de mensajes PUBLISH recibidos por minuto. Este proceso
-se suscribe a ese topic y sirve el último valor como JSON en mensajes
-por segundo, la señal con la que KEDA escala el procesador: mide la
-carga ofrecida a la entrada de la plataforma, no el consumo aguas
-abajo, así que reacciona antes de que el procesador se sature.
+Este proceso se suscribe al contador acumulado
+$SYS/broker/publish/messages/received y sirve como JSON su derivada, en
+mensajes por segundo. Es la señal con la que KEDA escala el procesador: mide la
+carga ofrecida a la entrada de la plataforma, no el consumo aguas abajo, así que
+reacciona antes de que el procesador se sature.
+
+Se deriva el contador en vez de leer la media móvil de un minuto que mosquitto
+publica en $SYS/broker/load/publish/received/1min, que era lo que se hacía antes.
+Esa media llega tarde por construcción: en la corrida de arranque en frío del 10
+de septiembre marcaba 135 msg/s a los 23 segundos cuando ya se ofrecían 800, de
+modo que el disparador de caudal de KEDA no llegaba a activarse nunca y el
+escalado lo acababa llevando el de CPU, un escalón por ciclo. El contador se
+publica cada sys_interval (5 s en el chart), así que la derivada reacciona en
+ese plazo. Ver results/20260910_131609_peak_target150/validation.md.
 """
 
 import argparse
@@ -17,14 +25,33 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import paho.mqtt.client as mqtt
 
-LOAD_TOPIC = "$SYS/broker/load/publish/received/1min"
+COUNT_TOPIC = "$SYS/broker/publish/messages/received"
 
 log = logging.getLogger("broker-exporter")
 
 
-def per_second(payload: bytes) -> float:
-    """Convierte el valor del topic (mensajes por minuto) a mensajes por segundo."""
-    return float(payload) / 60.0
+class RateMeter:
+    """Deriva el contador acumulado de mensajes recibidos por el broker.
+
+    Guarda la última lectura y devuelve mensajes por segundo entre dos
+    lecturas consecutivas. La primera lectura no da caudal, porque no hay con
+    qué compararla, y un contador que retrocede significa que el broker se ha
+    reiniciado: en ambos casos devuelve None y el llamante deja el valor
+    anterior en pie hasta la siguiente lectura.
+    """
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._count: int | None = None
+        self._ts: float = 0.0
+
+    def update(self, count: int, now: float) -> float | None:
+        with self._lock:
+            anterior, antes = self._count, self._ts
+            self._count, self._ts = count, now
+        if anterior is None or count < anterior or now <= antes:
+            return None
+        return (count - anterior) / (now - antes)
 
 
 class LoadGauge:
@@ -59,7 +86,7 @@ def render_metrics(value: float) -> str:
     """Formatea el caudal como una métrica de Prometheus (formato de texto)."""
     return (
         "# HELP hyrox_broker_messages_per_second Mensajes PUBLISH recibidos por "
-        "el broker por segundo (media movil de 1 min).\n"
+        "el broker por segundo, derivados de su contador acumulado.\n"
         "# TYPE hyrox_broker_messages_per_second gauge\n"
         f"hyrox_broker_messages_per_second {value:.3f}\n"
     )
@@ -97,8 +124,10 @@ def main() -> None:
     parser.add_argument("--broker-host", default="localhost")
     parser.add_argument("--broker-port", type=int, default=1883)
     parser.add_argument("--http-port", type=int, default=9090)
-    parser.add_argument("--stale-after", type=float, default=60.0,
-                        help="segundos sin datos del broker tras los que se reporta 0")
+    parser.add_argument("--stale-after", type=float, default=30.0,
+                        help="segundos sin datos del broker tras los que se reporta 0. "
+                             "Tiene que dar margen a sys_interval del broker, que es "
+                             "cada cuánto se publica el contador")
     parser.add_argument("--log-level", default="INFO")
     args = parser.parse_args()
 
@@ -106,19 +135,23 @@ def main() -> None:
                         format="%(asctime)s %(levelname)s %(name)s %(message)s")
 
     gauge = LoadGauge(args.stale_after)
+    meter = RateMeter()
 
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id="broker-exporter")
 
     def on_connect(cli, userdata, flags, reason_code, properties):
         # La suscripción va aquí para que se renueve en cada reconexión.
-        cli.subscribe(LOAD_TOPIC)
-        log.info("conectado al broker, suscrito a %s", LOAD_TOPIC)
+        cli.subscribe(COUNT_TOPIC)
+        log.info("conectado al broker, suscrito a %s", COUNT_TOPIC)
 
     def on_message(cli, userdata, msg):
         try:
-            gauge.set(per_second(msg.payload))
+            caudal = meter.update(int(msg.payload), time.monotonic())
         except ValueError:
             log.warning("payload no numérico en %s: %r", msg.topic, msg.payload)
+            return
+        if caudal is not None:
+            gauge.set(caudal)
 
     client.on_connect = on_connect
     client.on_message = on_message

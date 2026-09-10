@@ -25,6 +25,11 @@ data:
 
     max_connections -1
 
+    # Cada cuánto se publican las estadísticas de $SYS (defecto 10 s). El sidecar
+    # exporter deriva de ahí el caudal con el que KEDA escala el procesador, así
+    # que este intervalo es el suelo del tiempo de reacción del autoescalado.
+    sys_interval 5
+
     # Ventana de mensajes QoS 1 entregados y aún sin confirmar por cada cliente
     # suscriptor. El valor por defecto (20) acota el caudal hacia cada réplica
     # del procesador a esa ventana dividida entre el tiempo de confirmación, con
