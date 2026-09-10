@@ -1,0 +1,7 @@
+ventana,techo_msg_s,cpu_m,transporte_p95_ms,nodo,nodo_broker
+500,651.5,932m,9406,hyrox-worker2,k3s-hyrox
+500,719.1,969m,7855,hyrox-worker2,k3s-hyrox
+500,689.8,934m,5905,hyrox-worker2,k3s-hyrox
+500,629.4,844m,10749,hyrox-worker2,k3s-hyrox
+500,695.2,505m,4239,hyrox-worker2,k3s-hyrox
+500,681.4,946m,8565,hyrox-worker2,k3s-hyrox
