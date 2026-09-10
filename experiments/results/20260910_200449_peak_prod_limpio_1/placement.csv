@@ -1,0 +1,5 @@
+pod,nodo
+grafana-69867495cd-hn6fz,k3s-hyrox
+influxdb-d88b5c787-8tz4l,k3s-hyrox
+mosquitto-7bc464fb7f-fkk22,k3s-hyrox
+processor-79945475-f9bzw,hyrox-worker
