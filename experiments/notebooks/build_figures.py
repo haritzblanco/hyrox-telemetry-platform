@@ -71,12 +71,19 @@ def _caudal_sostenido(rundir: Path) -> float | None:
 
     Dividir el total confirmado entre el intervalo completo de ventanas mezcla
     el régimen estable con el arranque y con la cola de drenaje, y produce una
-    cifra por debajo de la carga ofrecida incluso cuando no se ha perdido ni
-    una lectura. Aquí se agrupa en cubos de diez segundos, se promedia dentro
-    del cubo el caudal de cada réplica y se suman las réplicas entre sí, que es
-    el caudal del sistema en ese tramo. La cifra final es la mediana de los
-    cubos en los que la corrida está realmente en carga (la mitad del máximo
-    observado), que es lo que la figura compara con la diagonal ideal.
+    cifra por debajo de la carga ofrecida incluso cuando no se ha perdido ni una
+    lectura. Aquí se agrupa en cubos de diez segundos, se promedia dentro del
+    cubo el caudal de cada réplica y se suman las réplicas entre sí, que es el
+    caudal del sistema en ese tramo.
+
+    La cifra final es la mediana del tramo contiguo que va del primer al último
+    cubo por encima del 80 por ciento del máximo. Tomar la mediana de todos los
+    cubos por encima de la mitad del máximo, que es lo que se hacía antes, mete
+    en el resumen la cola de drenaje: en las celdas donde el procesado va justo,
+    el consumidor sigue trabajando después de que el simulador haya parado y esos
+    cubos tiran la mediana hacia abajo. La celda de cuatro réplicas al pico de la
+    matriz estrangulada pasaba así por 718 msg/s cuando en régimen sostenía 791,
+    y quedaba por debajo de la diagonal pese a no haber perdido una sola lectura.
 
     El promedio por réplica antes de sumar no es opcional: con el intervalo de
     métricas a dos segundos cada réplica emite cinco ventanas por cubo, y
@@ -93,9 +100,12 @@ def _caudal_sostenido(rundir: Path) -> float | None:
     df = pd.DataFrame(filas)
     t0 = df["ts"].min()
     df["cubo"] = ((df["ts"] - t0).dt.total_seconds() // 10).astype(int)
-    agregado = df.groupby(["cubo", "replica"])["thr"].mean().groupby("cubo").sum()
-    en_carga = agregado[agregado >= 0.5 * agregado.max()]
-    return round(float(en_carga.median()), 1) if not en_carga.empty else None
+    agregado = df.groupby(["cubo", "replica"])["thr"].mean().groupby("cubo").sum().sort_index()
+    altos = agregado[agregado >= 0.8 * agregado.max()]
+    if altos.empty:
+        return None
+    tramo = agregado.loc[altos.index.min():altos.index.max()]
+    return round(float(tramo.median()), 1)
 
 
 def _tasa_ofrecida(rundir: Path, nominal: float) -> float:

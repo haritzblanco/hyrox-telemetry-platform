@@ -26,6 +26,16 @@ spec:
     spec:
       # Solo el sidecar exporter se descarga del registro privado (DOCR); la
       # imagen de mosquitto viene de Docker Hub y no necesita credenciales.
+      # El broker va en el nodo de control, aislado de los nodos de cómputo donde
+      # se reparten las réplicas del procesador. Sin esta fijación el planificador
+      # lo coloca donde quiera, y cada reinicio era una moneda al aire: cuando
+      # caía en un nodo de cómputo compartía sus dos vCPU con una réplica y las
+      # dos se estorbaban. Medido el 2026-09-10 con la réplica fijada a cada
+      # nodo: 853 msg/s con 514 m de CPU en el nodo libre, frente a 571-603 msg/s
+      # quemando 963 m y con la latencia de transporte en 13 s en el nodo
+      # compartido con el broker.
+      nodeSelector:
+        node-role.kubernetes.io/control-plane: "true"
       imagePullSecrets:
         - name: registry-haritzblanco
       containers:
