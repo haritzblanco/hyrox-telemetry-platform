@@ -15,6 +15,10 @@
 #
 # Variables (todas con default):
 #   N=40 SPEEDUP=20            carga ≈ N × SPEEDUP msg/s durante ~4 min
+#   CPU_LIMIT=""               límite de CPU por réplica (ver run_matrix.sh). Con
+#                              el límite de producción una réplica cubre el pico
+#                              y el escalado no tiene nada que rescatar; bajándolo
+#                              se ve al autoescalador recuperar el caudal.
 #   POLL=5                     periodo de muestreo de réplicas y recursos
 set -uo pipefail
 
@@ -24,6 +28,7 @@ ROOT="$(pwd)"
 N="${N:-40}"
 SPEEDUP="${SPEEDUP:-20}"
 POLL="${POLL:-5}"
+CPU_LIMIT="${CPU_LIMIT:-}"
 BROKER_HOST="${BROKER_HOST:-192.168.252.2}"
 BROKER_PORT="${BROKER_PORT:-31883}"
 INFLUX_URL="${INFLUX_URL:-http://192.168.252.2:30086}"
@@ -59,7 +64,37 @@ echo "=== Corrida al pico de diseño (configuración de producción) ==="
 echo "Carga: $N atletas × speedup $SPEEDUP ≈ $RATE msg/s | sesión $SESSION"
 echo "Escalado: KEDA (sin réplicas fijadas a mano)"
 echo "Resultados en: $OUTDIR"
+[[ -n "$CPU_LIMIT" ]] && echo "Límite de CPU por réplica: $CPU_LIMIT"
 echo ""
+
+# ── límite de CPU por réplica ───────────────────────────────────────────────
+# El escalado automático solo se puede ver rescatar un caudal que se esté
+# perdiendo. Con el límite de producción no hay tal caudal perdido, así que para
+# esa corrida se estrangula cada réplica y se restaura el valor original al
+# terminar, pase lo que pase.
+CPU_LIMIT_ORIG=""
+restore_cpu_limit() {
+    [[ -n "$CPU_LIMIT_ORIG" ]] || return 0
+    kubectl patch deployment/processor -n "$NS" --type=json -p "[
+        {\"op\":\"replace\",\"path\":\"/spec/template/spec/containers/0/resources/limits/cpu\",\"value\":\"$CPU_LIMIT_ORIG\"},
+        {\"op\":\"replace\",\"path\":\"/spec/template/spec/containers/0/resources/requests/cpu\",\"value\":\"200m\"}]" >/dev/null 2>&1 || true
+}
+trap restore_cpu_limit EXIT
+
+if [[ -n "$CPU_LIMIT" ]]; then
+    CPU_LIMIT_ORIG="$(kubectl get deployment/processor -n "$NS" \
+        -o jsonpath='{.spec.template.spec.containers[0].resources.limits.cpu}')"
+    # requests igual al límite: el disparador de CPU de KEDA mide utilización
+    # contra la petición, así que ambas cifras tienen que moverse juntas para
+    # que el umbral del 75 % siga significando lo mismo.
+    kubectl patch deployment/processor -n "$NS" --type=json -p "[
+        {\"op\":\"replace\",\"path\":\"/spec/template/spec/containers/0/resources/limits/cpu\",\"value\":\"$CPU_LIMIT\"},
+        {\"op\":\"replace\",\"path\":\"/spec/template/spec/containers/0/resources/requests/cpu\",\"value\":\"$CPU_LIMIT\"}]" >/dev/null
+    kubectl rollout status deployment/processor -n "$NS" --timeout=180s
+    # Se arranca desde una sola réplica: el interés está en el arranque en frío.
+    kubectl scale deployment/processor -n "$NS" --replicas=1 >/dev/null
+    sleep 10
+fi
 
 # ── muestreo de réplicas: la evidencia del escalado en caliente ─────────────
 sample_replicas() {
@@ -161,7 +196,8 @@ DELIVERED="$(influx_count "$SESSION")"
 python3 -c "
 import json
 json.dump({'run':'peak','athletes':$N,'speedup':$SPEEDUP,'target_rate_msg_s':$RATE,
-           'scaling':'keda','session':'$SESSION','start':'$START_ISO','end':'$END_ISO',
+           'scaling':'keda','cpu_limit':'$CPU_LIMIT' or None,
+           'session':'$SESSION','start':'$START_ISO','end':'$END_ISO',
            'enqueued':$ENQUEUED,'offered':$OFFERED,'delivered':$DELIVERED},
           open('$OUTDIR/run.json','w'), indent=2)"
 

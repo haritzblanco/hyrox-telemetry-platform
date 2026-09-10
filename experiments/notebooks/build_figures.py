@@ -25,6 +25,7 @@ from pathlib import Path
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -201,6 +202,51 @@ def _ventanas_por_pod(rundir: Path) -> pd.DataFrame:
     return pd.DataFrame(filas)
 
 
+def _caudal_continuo(rundir: Path, t0, paso: float = 1.0, ventana: float = 10.0):
+    """Caudal agregado a partir de los contadores acumulados de cada réplica.
+
+    Sumar el caudal instantáneo que reporta cada réplica sale mal en cuanto el
+    número de réplicas cambia durante la corrida: cada una emite su ventana en
+    su propio instante, así que agrupar por cubos de diez segundos mete dos
+    ventanas de una réplica en un cubo y ninguna en el siguiente. El resultado
+    son un pico y un valle artificiales justo en los instantes en que entra una
+    réplica nueva, que no corresponden a ningún mensaje ganado ni perdido.
+
+    Los contadores acumulados sí son aditivos con independencia de la fase: se
+    interpola la curva de cada réplica sobre una rejilla común -- anclada en el
+    origen de su primera ventana, para no imputarle a un instante anterior el
+    trabajo de esa ventana --, se suman y se deriva sobre `ventana` segundos.
+    """
+    total = None
+    rejilla = None
+    for jf in sorted(rundir.glob("proc_*.jsonl")):
+        ts, acumulado = [], []
+        for w in _load_jsonl(jf):
+            t = (pd.to_datetime(w["ts"]) - t0).total_seconds()
+            if not ts:
+                ts.append(t - (w.get("window_s") or ventana))
+                acumulado.append(0)
+            ts.append(t)
+            acumulado.append(w.get("total_acked", 0))
+        if len(ts) < 2:
+            continue
+        if rejilla is None:
+            fin = max(ts)
+            rejilla = np.arange(0.0, fin + paso, paso)
+            total = np.zeros_like(rejilla)
+        elif max(ts) > rejilla[-1]:
+            extra = np.arange(rejilla[-1] + paso, max(ts) + paso, paso)
+            rejilla = np.concatenate([rejilla, extra])
+            total = np.concatenate([total, np.full(len(extra), total[-1])])
+        total = total + np.interp(rejilla, ts, acumulado, left=0, right=acumulado[-1])
+    if rejilla is None:
+        return None, None
+    desplazado = np.interp(rejilla - ventana, rejilla, total, left=0.0)
+    caudal = (total - desplazado) / ventana
+    valido = rejilla >= ventana
+    return rejilla[valido], caudal[valido]
+
+
 def fig_arranque_frio(rundir: Path, destino: Path) -> None:
     """Cronología del escalado: réplicas, caudal y latencia sobre el mismo eje.
 
@@ -217,10 +263,11 @@ def fig_arranque_frio(rundir: Path, destino: Path) -> None:
         raise SystemExit(f"sin ventanas de métricas en {rundir}")
     vent["t"] = (vent["ts"] - t0).dt.total_seconds()
 
-    # Las réplicas emiten sus ventanas cada 10 s pero no en el mismo instante;
-    # se agrupan en cubos de 10 s para poder sumar caudal entre ellas.
+    # El caudal se reconstruye de los contadores acumulados (ver
+    # _caudal_continuo). La latencia no es aditiva, así que basta agrupar las
+    # ventanas en cubos de 10 s y quedarse con la mediana entre réplicas vivas.
     vent["cubo"] = (vent["t"] // 10 * 10).astype(int)
-    caudal = vent.groupby("cubo")["thr_acked_s"].sum()
+    t_caudal, caudal = _caudal_continuo(rundir, t0)
     # Latencia representativa del instante: mediana entre réplicas vivas, la
     # misma estadística con la que se resume la corrida entera.
     lat = vent.groupby("cubo")[["transporte_p95", "persistencia_p95"]].median()
@@ -247,7 +294,7 @@ def fig_arranque_frio(rundir: Path, destino: Path) -> None:
     ax.annotate(f"carga ofrecida: {carga} msg/s", xy=(0.995, carga),
                 xycoords=("axes fraction", "data"), ha="right", va="bottom",
                 fontsize=9, color=TINTA_TENUE)
-    ax.plot(caudal.index, caudal.values, color=SERIE[4])
+    ax.plot(t_caudal, caudal, color=SERIE[4])
     ax.set_ylabel("Caudal confirmado\n(msg/s)")
     ax.set_ylim(bottom=0)
     _ejes(ax)
@@ -310,10 +357,14 @@ def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--matrix", type=Path, required=True,
                    help="campaña de matriz réplicas × carga")
-    p.add_argument("--peak-cold", type=Path, required=True,
+    p.add_argument("--peak-cold", type=Path,
                    help="corrida al pico con escalado automático desde 1 réplica")
     p.add_argument("--peak-pre", type=Path,
                    help="corrida al pico anterior al arreglo de la ventana en vuelo")
+    p.add_argument("--corregir-persistencia", action="store_true",
+                   help="descuenta el desfase de la métrica de persistencia; solo "
+                        "legítimo si la campaña acredita que ninguna réplica va "
+                        "atrasada (ver analyze._desfase_persistencia)")
     p.add_argument("--out", type=Path,
                    default=Path(__file__).resolve().parents[2] / "docs/figuras/cap10")
     args = p.parse_args()
@@ -324,7 +375,7 @@ def main() -> int:
     for d in sorted(args.matrix.iterdir()):
         if not d.is_dir():
             continue
-        fila = aggregate_run(d)
+        fila = aggregate_run(d, corregir_persistencia=args.corregir_persistencia)
         if fila is None:
             continue
         fila["caudal_sostenido"] = _caudal_sostenido(d)
@@ -339,8 +390,9 @@ def main() -> int:
     fig_perdida(df, args.out / "fig-escalado-perdida.png")
     if df["cpu_mean_m"].notna().any():
         fig_cpu(df, args.out / "fig-escalado-cpu.png")
-    fig_arranque_frio(args.peak_cold, args.out / "fig-arranque-frio.png")
-    if args.peak_pre:
+    if args.peak_cold:
+        fig_arranque_frio(args.peak_cold, args.out / "fig-arranque-frio.png")
+    if args.peak_pre and args.peak_cold:
         fig_inflight(args.peak_pre, args.peak_cold, args.out / "fig-inflight.png")
 
     for f in sorted(args.out.glob("*.png")):

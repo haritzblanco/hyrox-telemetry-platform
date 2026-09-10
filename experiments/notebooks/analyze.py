@@ -31,6 +31,10 @@ try:
 except ImportError:
     sys.exit("Faltan dependencias: pip install pandas matplotlib")
 
+# Segundos iniciales de cada corrida que se descartan al medir recursos: cubren
+# el pod ocioso y el retardo de metrics-server (ver aggregate_run).
+ASENTAMIENTO_S = 30
+
 
 def _load_jsonl(path: Path) -> list[dict]:
     out = []
@@ -82,16 +86,103 @@ def _agg_latency(windows: list[dict], key: str) -> dict:
     }
 
 
-def aggregate_run(rundir: Path) -> dict | None:
+# Latencia de persistencia real, en ms, de una réplica cuya instrumentación está
+# alineada. La gobierna el vaciado por lotes cada 500 ms, así que la mediana cae
+# en torno a medio intervalo. El valor se estableció por dos vías independientes
+# que coinciden: la réplica limpia de la campaña del 10 de agosto mide 288-293 ms
+# a lo largo de un rango de carga de 4×, y el ajuste de otra réplica sobre doce
+# celdas y un rango de 15× (ver _desfase_persistencia) da 290 ms de ordenada en
+# el origen con R² = 0,988.
+PERSISTENCIA_BASE_MS = 290.0
+
+# Desfase, en lecturas, a partir del cual se considera que una réplica arrastra
+# el defecto. Por debajo, la desviación es ruido de la propia medida.
+DESFASE_MINIMO = 5.0
+
+# Techo del desfase atribuible al instrumento. El lote son 500 puntos, así que un
+# residuo permanente de unas decenas es compatible con un emparejamiento
+# desalineado; centenares ya no lo son, y describen una cola de escritura real.
+DESFASE_MAXIMO = 100.0
+
+
+def _desfase_persistencia(windows: list[dict]) -> float:
+    """Lecturas que una réplica lleva desalineadas en la métrica de persistencia.
+
+    Hasta la imagen `processor-0.10.0` incluida, el procesador delegaba el lote
+    en el cliente de InfluxDB y emparejaba cada confirmación con las marcas de
+    tiempo más antiguas pendientes, tantas como puntos declarase el lote. Si una
+    confirmación declaraba menos puntos de los que se encolaron, las marcas
+    sobrantes se quedaban a la cabeza de la cola de forma permanente y toda
+    medida posterior salía inflada en el tiempo que tardan en producirse:
+    desfase dividido por la tasa. El exceso no es un tiempo constante sino una
+    CUENTA DE LECTURAS constante, y esa es la firma que permite identificarlo y
+    descontarlo. Con el lote propio ese emparejamiento ya no existe —cada punto
+    viaja con su marca de encolado—, así que en campañas posteriores lo que el
+    estimador pueda ver es cola de escritura real, no desfase del instrumento.
+
+    El desfase se estima por celda, no una vez por réplica, porque crece a
+    saltos: hay réplicas que arrancan limpias y se desalinean a mitad de tanda.
+
+    La corrección se valida sola: descontando de todos los percentiles el exceso
+    deducido SOLO de la mediana, el percentil 95 de las réplicas afectadas cae en
+    517-520 ms en las doce celdas de la campaña del 10 de agosto, frente a los
+    515-519 que miden las réplicas limpias de esas mismas celdas.
+
+    **La estimación no distingue por sí sola este desfase de una cola de
+    escritura real**, que produce exactamente el mismo exceso sobre la base. Por
+    eso descontarlo es una decisión explícita de quien analiza (`corregir_persistencia`)
+    y solo es legítima cuando la campaña acredita por otra vía que ninguna
+    réplica va atrasada: en la del 10 de agosto lo acreditan una latencia de
+    transporte plana en 152-175 ms y una pérdida nula en las doce celdas. En una
+    campaña con saturación provocada, descontarlo borraría el fenómeno medido.
+    """
+    p50s = [w["lat_persist_ms"]["p50"] for w in windows
+            if (w.get("lat_persist_ms") or {}).get("p50") and (w.get("thr_acked_s") or 0) > 10]
+    tasas = [w["thr_acked_s"] for w in windows
+             if (w.get("lat_persist_ms") or {}).get("p50") and (w.get("thr_acked_s") or 0) > 10]
+    if len(p50s) < 3:
+        return 0.0
+    exceso = statistics.median(p50s) - PERSISTENCIA_BASE_MS
+    tasa = statistics.median(tasas)
+    desfase = exceso * tasa / 1000.0
+    if not DESFASE_MINIMO <= desfase <= DESFASE_MAXIMO:
+        return 0.0
+    return desfase
+
+
+def _corregir_persistencia(windows: list[dict], desfase: float) -> None:
+    """Descuenta el desfase de los percentiles de persistencia, in situ."""
+    if desfase <= 0:
+        return
+    for w in windows:
+        s = w.get("lat_persist_ms")
+        tasa = w.get("thr_acked_s") or 0
+        if not s or tasa <= 10:
+            continue
+        exceso = 1000.0 * desfase / tasa
+        for clave in ("mean", "p50", "p95", "p99", "max"):
+            if s.get(clave) is not None:
+                s[clave] = max(0.0, s[clave] - exceso)
+
+
+def aggregate_run(rundir: Path, corregir_persistencia: bool = False) -> dict | None:
     meta_path = rundir / "run.json"
     if not meta_path.exists():
         return None
     meta = json.loads(meta_path.read_text())
 
-    # ventanas de métricas de todas las réplicas
+    # Ventanas de métricas de todas las réplicas. Se cargan por réplica y no en
+    # un montón único porque el desfase de la persistencia es propio de cada una
+    # (ver _desfase_persistencia) y hay que descontarlo antes de agregar.
     windows: list[dict] = []
-    for jf in rundir.glob("proc_*.jsonl"):
-        windows.extend(_load_jsonl(jf))
+    desfases: dict[str, float] = {}
+    for jf in sorted(rundir.glob("proc_*.jsonl")):
+        w_pod = _load_jsonl(jf)
+        d = _desfase_persistencia(w_pod) if corregir_persistencia else 0.0
+        if d:
+            desfases[jf.stem.replace("proc_", "")] = round(d, 1)
+            _corregir_persistencia(w_pod, d)
+        windows.extend(w_pod)
 
     acked = sum(w.get("acked", 0) for w in windows)
     consumed = sum(w.get("consumed", 0) for w in windows)
@@ -109,16 +200,36 @@ def aggregate_run(rundir: Path) -> dict | None:
     delivered = meta.get("delivered", 0)
     loss_pct = round(100.0 * (offered - delivered) / offered, 2) if offered else None
 
-    # recursos: CPU/memoria totales (suma de réplicas) por instante de muestreo
+    # Recursos en RÉGIMEN, no promediados sobre toda la corrida. Las primeras
+    # muestras de cada celda recogen el pod ocioso antes de que llegue la carga y
+    # el retardo con que metrics-server refleja el consumo, del orden de 15 s, de
+    # modo que promediar la ventana completa subestima el consumo y lo hace en
+    # distinta medida en cada celda, según cuánto arranque le haya tocado dentro.
+    # Con eso la comparación entre configuraciones deja de ser limpia: la celda de
+    # una réplica a 200 msg/s daba 80 m de media frente a los 117 de su régimen.
+    # Se descartan los primeros ASENTAMIENTO_S y se promedia cada réplica por
+    # separado antes de sumar, porque agrupar por instante pierde a las réplicas
+    # que no reportaron en ese instante concreto.
     cpu_peak = cpu_mean = mem_peak = mem_mean = None
     rcsv = rundir / "resources.csv"
     if rcsv.exists():
         df = pd.read_csv(rcsv)
         if not df.empty:
+            inicio = meta.get("start")
+            if inicio:
+                t0 = pd.to_datetime(inicio).timestamp()
+                regimen = df[df["ts_unix"] >= t0 + ASENTAMIENTO_S]
+                # Una corrida más corta que el asentamiento se quedaría sin
+                # muestras: antes que inventar un hueco, se usa la ventana entera.
+                if not regimen.empty:
+                    df = regimen
+            por_pod = df.groupby("pod").agg(cpu_m=("cpu_m", "mean"),
+                                            mem_mi=("mem_mi", "mean"))
+            cpu_mean = round(float(por_pod.cpu_m.sum()), 1)
+            mem_mean = round(float(por_pod.mem_mi.sum()), 1)
             tot = df.groupby("ts_unix").agg(cpu_m=("cpu_m", "sum"),
                                             mem_mi=("mem_mi", "sum"))
-            cpu_peak, cpu_mean = float(tot.cpu_m.max()), round(float(tot.cpu_m.mean()), 1)
-            mem_peak, mem_mean = float(tot.mem_mi.max()), round(float(tot.mem_mi.mean()), 1)
+            cpu_peak, mem_peak = float(tot.cpu_m.max()), float(tot.mem_mi.max())
 
     return {
         "run": meta["run"],
@@ -140,6 +251,18 @@ def aggregate_run(rundir: Path) -> dict | None:
         "lat_persist_p95_ms": persist["p95"],
         "lat_persist_p99_ms": persist["p99"],
         "lat_persist_p95worst_ms": persist["p95_worst"],
+        # Suelo de la cola de marcas pendientes: son puntos que se encolaron
+        # para escritura y de los que nunca llegó confirmación ni error, es
+        # decir, lecturas descartadas en silencio por el cliente de InfluxDB.
+        # Cero es lo esperable; cualquier cifra estable por encima señala que la
+        # corrida perdió puntos por ahí y que su latencia de persistencia sale
+        # inflada. Ver results/20260909_212221_diag_writer/validation.md.
+        "marcas_atrapadas": max(
+            (w["persist_pending_min"] for w in windows
+             if w.get("persist_pending_min") is not None),
+            default=None,
+        ),
+        "desfase_persistencia": ";".join(f"{k}={v}" for k, v in desfases.items()) or None,
         "cpu_peak_m": cpu_peak,
         "cpu_mean_m": cpu_mean,
         "mem_peak_mi": mem_peak,

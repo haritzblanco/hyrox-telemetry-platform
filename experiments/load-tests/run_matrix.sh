@@ -21,6 +21,12 @@
 #   BROKER_HOST=192.168.252.2  BROKER_PORT=31883
 #   INFLUX_URL=http://192.168.252.2:30086   INFLUX_TOKEN=<del Secret del clúster>
 #   SETTLE=6                   segundos de asentamiento tras escalar
+#   CPU_LIMIT=""               si se fija (p.ej. 150m), estrangula la CPU de cada
+#                              réplica antes de la matriz. Sirve para llevar el
+#                              cuello de botella al procesado en vez de al equipo
+#                              que genera la carga: con el límite de producción
+#                              (1000 m) una sola réplica absorbe el pico entero y
+#                              la matriz no distingue una configuración de otra.
 set -uo pipefail
 
 cd "$(dirname "$0")/../.."          # raíz del repo
@@ -41,6 +47,7 @@ INFLUX_BUCKET="${INFLUX_BUCKET:-telemetry}"
 NS="${NS:-hyrox}"
 SELECTOR="app.kubernetes.io/name=processor"
 SETTLE="${SETTLE:-6}"
+CPU_LIMIT="${CPU_LIMIT:-}"
 
 SIM="$ROOT/components/simulator/.venv/bin/hyrox-sim"
 STAMP="$(date -u +%Y%m%d_%H%M%S)"
@@ -63,6 +70,7 @@ kubectl top pods -n "$NS" >/dev/null 2>&1 || echo "AVISO: 'kubectl top' falla; r
 echo "=== Evaluación experimental ==="
 echo "Réplicas: $REPLICAS | Atletas: $N_LIST | speedup: $SPEEDUP → tasa ≈ N×$SPEEDUP msg/s"
 echo "Resultados en: $OUTDIR"
+[[ -n "$CPU_LIMIT" ]] && echo "Límite de CPU por réplica: $CPU_LIMIT"
 echo ""
 
 # ── sincronización de reloj (offset Mac↔VM para la latencia de transporte) ──
@@ -108,6 +116,34 @@ print('' if tot is None else tot)" 2>/dev/null | head -1)"
     return 1
 }
 
+# ── estrangular la CPU de cada réplica ──────────────────────────────────────
+# La matriz con el límite de producción (1000 m por réplica) mide una plataforma
+# que nunca llega a saturarse: una sola réplica cubre el pico de diseño y las
+# tres configuraciones dan la misma curva. Bajando el límite se desplaza el
+# cuello de botella al procesado, que es la variable que la matriz manipula, y
+# el aporte de cada réplica pasa a ser observable. El valor original se restaura
+# al terminar para no dejar el clúster estrangulado.
+CPU_LIMIT_ORIG=""
+set_cpu_limit() {
+    local lim="$1"
+    CPU_LIMIT_ORIG="$(kubectl get deployment/processor -n "$NS" \
+        -o jsonpath='{.spec.template.spec.containers[0].resources.limits.cpu}')"
+    echo "### Estrangulando cada réplica a $lim de CPU (antes: ${CPU_LIMIT_ORIG:-sin límite}) ###"
+    # requests igual al límite: la réplica queda en calidad de servicio
+    # garantizada y el planificador no puede colocar dos donde solo cabe una.
+    kubectl patch deployment/processor -n "$NS" --type=json -p "[
+        {\"op\":\"replace\",\"path\":\"/spec/template/spec/containers/0/resources/limits/cpu\",\"value\":\"$lim\"},
+        {\"op\":\"replace\",\"path\":\"/spec/template/spec/containers/0/resources/requests/cpu\",\"value\":\"$lim\"}]" >/dev/null
+    kubectl rollout status deployment/processor -n "$NS" --timeout=180s
+}
+
+restore_cpu_limit() {
+    [[ -n "$CPU_LIMIT_ORIG" ]] || return 0
+    kubectl patch deployment/processor -n "$NS" --type=json -p "[
+        {\"op\":\"replace\",\"path\":\"/spec/template/spec/containers/0/resources/limits/cpu\",\"value\":\"$CPU_LIMIT_ORIG\"},
+        {\"op\":\"replace\",\"path\":\"/spec/template/spec/containers/0/resources/requests/cpu\",\"value\":\"200m\"}]" >/dev/null 2>&1 || true
+}
+
 # ── fijar el número de réplicas ─────────────────────────────────────────────
 # Con KEDA desplegado no basta `kubectl scale`: el HPA que gestiona el
 # ScaledObject devuelve el Deployment a la cuenta que dicta el disparador en
@@ -133,7 +169,45 @@ unpin_replicas() {
             autoscaling.keda.sh/paused-replicas- >/dev/null 2>&1 || true
     fi
 }
-trap unpin_replicas EXIT
+trap 'unpin_replicas; restore_cpu_limit' EXIT
+
+# ── esperar a que la cola del broker se vacíe ───────────────────────────────
+# Mientras la plataforma no se satura basta un margen fijo de tres segundos
+# para que el último lote llegue a la base de datos. En cuanto una celda satura
+# deja de valer: el broker acumula hasta diez mil mensajes por suscriptor y el
+# procesado tarda en drenarlos tanto como diga su techo. Contar en ese momento
+# apunta como pérdida lo que solo está encolado, y además la celda siguiente
+# hereda el atasco de la anterior.
+#
+# Se espera, por tanto, a que el consumo agregado caiga a cero en dos sondeos
+# seguidos. La cifra de pérdida pasa a ser descarte real del broker, y la
+# latencia recoge la espera en cola, que es la señal de la saturación.
+esperar_drenaje() {
+    local limite="${DRAIN_TIMEOUT:-300}" umbral=5 bajos=0 t0=$SECONDS
+    while (( SECONDS - t0 < limite )); do
+        local suma=0 r
+        for pod in $(kubectl get pods -n "$NS" -l "$SELECTOR" \
+                     -o jsonpath='{.items[*].metadata.name}' 2>/dev/null); do
+            r="$(kubectl logs "$pod" -n "$NS" --tail=40 2>/dev/null | python3 -c "
+import sys,json
+ultimo=0
+for l in sys.stdin:
+    if '\"kind\": \"metrics\"' in l or '\"kind\":\"metrics\"' in l:
+        try: ultimo=json.loads(l)['thr_consumed_s']
+        except Exception: pass
+print(int(ultimo))" 2>/dev/null)"
+            suma=$(( suma + ${r:-0} ))
+        done
+        if (( suma <= umbral )); then
+            bajos=$(( bajos + 1 ))
+            (( bajos >= 2 )) && break
+        else
+            bajos=0
+        fi
+        sleep 12
+    done
+    DRENAJE_S=$(( SECONDS - t0 ))
+}
 
 # ── una corrida (R réplicas, N atletas) ─────────────────────────────────────
 run_one() {
@@ -167,6 +241,11 @@ run_one() {
 
     # margen para que el último lote se confirme en InfluxDB (flush_interval 0,5 s)
     sleep 3
+    # …y espera a que se vacíe lo que quede encolado en el broker, que con una
+    # celda saturada puede ser mucho más que el último lote.
+    DRENAJE_S=0
+    esperar_drenaje
+    (( DRENAJE_S > 15 )) && echo "   drenaje: ${DRENAJE_S}s"
     local end_iso; end_iso="$(date -u +%Y-%m-%dT%H:%M:%S+00:00)"
 
     kill "$sampler_pid" 2>/dev/null || true; wait "$sampler_pid" 2>/dev/null || true
@@ -208,13 +287,16 @@ print(enq, ack)")"
     python3 -c "
 import json
 json.dump({'run':'$run','replicas':$R,'athletes':$N,'speedup':$SPEEDUP,
-           'target_rate_msg_s':$rate,'session':'$session',
+           'target_rate_msg_s':$rate,'session':'$session','cpu_limit':'$CPU_LIMIT' or None,
            'start':'$start_iso','end':'$end_iso',
-           'enqueued':$enqueued,'offered':$offered,'delivered':$delivered_json},
+           'enqueued':$enqueued,'offered':$offered,'delivered':$delivered_json,
+           'drain_s':$DRENAJE_S},
           open('$rundir/run.json','w'), indent=2)"
     echo "   encolado=$enqueued  ofrecido(acked)=$offered  persistido=$delivered  (pérdida=$perdida)"
     echo ""
 }
+
+[[ -n "$CPU_LIMIT" ]] && set_cpu_limit "$CPU_LIMIT"
 
 # ── matriz o secuencia explícita ────────────────────────────────────────────
 # Con SEQUENCE se ejecuta exactamente el orden indicado en lugar del producto

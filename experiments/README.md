@@ -15,6 +15,25 @@ en MQTT a una tasa controlada.
 | **Throughput** | Mensajes/s consumidos y confirmados por réplica (líneas JSON de métricas) | — |
 | **Pérdida** | `ofrecido` (simuladores) − `persistido` (conteo en InfluxDB); y `consumido − confirmado` (fallos de escritura) | — |
 | **Recursos** | `kubectl top pods` muestreado a intervalo fijo → CPU (m) y memoria (Mi) por réplica | — |
+| **Marcas pendientes** | Puntos encolados para escritura y todavía sin confirmar (`persist_pending_min` por ventana) | — |
+
+> ⚠️ **Qué significa el suelo de `persist_pending`, y qué significaba antes.**
+> La cola sube y baja con cada lote y en régimen vuelve a rozar el cero; un suelo
+> estable por encima de cero es un retraso que el escritor no recupera entre
+> lotes, es decir, **cola de escritura real**, y se suma con razón a la latencia
+> de persistencia.
+>
+> Hasta la imagen `processor-0.10.0` incluida ese mismo suelo contaba además
+> **lecturas perdidas**: el procesador delegaba el lote en el cliente de InfluxDB,
+> que descartaba puntos en silencio y dejaba sus marcas atrapadas para siempre,
+> inflando toda medida posterior de esa réplica. `analyze.py` lo resume por
+> corrida en `marcas_atrapadas`, que sigue siendo el indicador con el que leer las
+> campañas de junio a septiembre de 2026. Diagnóstico en
+> `results/20260909_212221_diag_writer/validation.md`; la causa raíz —una carrera
+> entre el hilo de vaciado y el del productor en el operador de ventanas del
+> cliente— en `results/20260910_101652_causa_raiz/validation.md`, reproducible sin
+> clúster con `load-tests/bench_write_api.py`. Desde el lote propio el procesador
+> agrupa y escribe él mismo, y ese descarte no puede darse.
 
 La instrumentación del processor se activa con `--metrics-interval > 0` y emite una
 línea JSON por ventana en **stdout** (`{"kind":"metrics",...}`), que el orquestador
@@ -56,6 +75,47 @@ Cada corrida `R{r}_N{n}` deja en `experiments/results/<timestamp>/<run>/`:
 - `resources.csv` — muestreo de CPU/memoria por réplica.
 - `sim.jsonl` — conteo de lecturas ofrecidas por atleta.
 - `run.json` — metadatos (réplicas, carga, ofrecido, persistido, ventana temporal).
+
+## Llevar el cuello de botella al procesado
+
+Con el límite de producción (1000 m por réplica) una sola réplica absorbe el pico
+de diseño entero, así que la matriz sale plana: las tres configuraciones dan la
+misma curva y no se puede observar qué aporta cada réplica. Por encima de 800
+msg/s tampoco vale subir la carga, porque el que se satura primero es el Mac que
+genera el tráfico, no el clúster.
+
+`CPU_LIMIT` estrangula cada réplica antes de la tanda para que el límite esté en
+el procesado, que es la variable que la matriz manipula. Con la capacidad medida
+de una réplica (≈ 0,36 m de CPU por msg/s más unos 17 m fijos), un límite de
+125 m sitúa su techo alrededor de 300 msg/s: una réplica satura ya a media carga,
+dos se quedan cortas al pico y cuatro lo absorben.
+
+```bash
+# Matriz con réplicas estranguladas: la curva de caudal deja de ser plana
+CPU_LIMIT=125m REPLICAS="1 2 4" N_LIST="4 8 12 16" \
+  bash experiments/load-tests/run_matrix.sh
+
+# El mismo estrangulamiento con KEDA al mando: el autoescalador recupera el caudal
+CPU_LIMIT=125m bash experiments/load-tests/run_peak.sh
+```
+
+El límite original se restaura al terminar la tanda, incluso si se interrumpe.
+
+## Caída de una réplica
+
+Si una réplica basta para el pico, la segunda solo se justifica por
+disponibilidad, y eso se mide: `run_failover.sh` congela dos réplicas, lanza el
+pico y elimina una a mitad de corrida sin terminación ordenada, de modo que la
+superviviente tenga que absorber el total mientras el planificador repone la
+baja.
+
+```bash
+KILL_AT=90 bash experiments/load-tests/run_failover.sh
+```
+
+A diferencia del resto del arnés, esta corrida va siguiendo los logs de cada pod
+desde el principio: los del pod eliminado desaparecen con él y no se pueden leer
+al final.
 
 ## Analizar
 
