@@ -147,6 +147,7 @@ print(tot)" 2>/dev/null || echo 0
 # ── la corrida ──────────────────────────────────────────────────────────────
 START_ISO="$(date -u +%Y-%m-%dT%H:%M:%S+00:00)"
 
+bash "$ROOT/experiments/load-tests/record_placement.sh" "$OUTDIR/placement.csv"
 sample_replicas "$OUTDIR/replicas.csv" &
 REPL_PID=$!
 bash "$ROOT/experiments/load-tests/sample_resources.sh" "$OUTDIR/resources.csv" "$POLL" &

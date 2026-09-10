@@ -55,10 +55,11 @@ kubectl annotate scaledobject/processor -n "$NS" \
 echo "=== Calibración del límite de CPU ==="
 echo "Carga de sondeo: $N × $SPEEDUP = $(( N * SPEEDUP )) msg/s | límites: $LIMITES"
 echo ""
-echo "limite,techo_msg_s,cpu_m,transporte_p95_ms" > "$OUTDIR/calibracion.csv"
+echo "limite,techo_msg_s,cpu_m,transporte_p95_ms,nodo,nodo_broker" > "$OUTDIR/calibracion.csv"
 
 for LIM in $LIMITES; do
-    echo "── límite $LIM ──────────────────────────────"
+    I=$((I+1))
+    echo "── límite $LIM (punto $I) ──────────────────────────────"
     kubectl patch deployment/processor -n "$NS" --type=json -p "[
         {\"op\":\"replace\",\"path\":\"/spec/template/spec/containers/0/resources/limits/cpu\",\"value\":\"$LIM\"},
         {\"op\":\"replace\",\"path\":\"/spec/template/spec/containers/0/resources/requests/cpu\",\"value\":\"$LIM\"}]" >/dev/null
@@ -71,21 +72,25 @@ for LIM in $LIMITES; do
            --broker-host "$BROKER_HOST" --broker-port "$BROKER_PORT" \
            --broker-password "$DEVICE_PASSWORD" --broker-ca "$CA_FILE" \
            --speedup "$SPEEDUP" --seed 42 --log-level WARNING \
-           > "$OUTDIR/sim_${LIM}.jsonl" 2>/dev/null
+           > "$OUTDIR/sim_${I}_${LIM}.jsonl" 2>/dev/null
     END_ISO="$(date -u +%Y-%m-%dT%H:%M:%S+00:00)"
 
     POD="$(kubectl get pods -n "$NS" -l "$SELECTOR" -o jsonpath='{.items[0].metadata.name}')"
     CPU="$(kubectl top pod "$POD" -n "$NS" --no-headers 2>/dev/null | awk '{print $2}')"
+    # El nodo de la réplica y el del broker: si comparten, el techo se desploma.
+    NODO="$(kubectl get pod "$POD" -n "$NS" -o jsonpath='{.spec.nodeName}' 2>/dev/null)"
+    NODO_BROKER="$(kubectl get pods -n "$NS" -l app.kubernetes.io/name=mosquitto \
+        -o jsonpath='{.items[0].spec.nodeName}' 2>/dev/null)"
     python3 "$ROOT/experiments/load-tests/collect_metrics.py" \
         --pod "$POD" --namespace "$NS" --start "$START_ISO" --end "$END_ISO" \
-        > "$OUTDIR/proc_${LIM}.jsonl" 2>/dev/null
+        > "$OUTDIR/proc_${I}_${LIM}.jsonl" 2>/dev/null
 
     # El techo es la mediana de las ventanas en carga, no la media de la
     # corrida: las primeras ventanas van por debajo mientras el proceso
     # arranca y arrastrarían la cifra hacia abajo.
     read -r TECHO LAT <<< "$(python3 -c "
 import json,statistics
-ws=[json.loads(l) for l in open('$OUTDIR/proc_${LIM}.jsonl') if l.strip()]
+ws=[json.loads(l) for l in open('$OUTDIR/proc_${I}_${LIM}.jsonl') if l.strip()]
 thr=[w['thr_acked_s'] for w in ws if w['thr_acked_s']>0]
 lat=[(w.get('lat_transport_ms') or {}).get('p95') for w in ws]
 lat=[x for x in lat if x]
@@ -93,8 +98,9 @@ carga=[t for t in thr if t >= 0.5*max(thr)] if thr else []
 print(round(statistics.median(carga),1) if carga else 0,
       round(statistics.median(lat)) if lat else 0)")"
 
-    echo "$LIM,$TECHO,$CPU,$LAT" >> "$OUTDIR/calibracion.csv"
+    echo "$LIM,$TECHO,$CPU,$LAT,$NODO,$NODO_BROKER" >> "$OUTDIR/calibracion.csv"
     echo "   techo ≈ $TECHO msg/s | CPU $CPU | transporte p95 $LAT ms"
+    [[ "$NODO" == "$NODO_BROKER" ]] && echo "   AVISO: la replica comparte nodo con el broker; el techo no es comparable"
     echo ""
 done
 

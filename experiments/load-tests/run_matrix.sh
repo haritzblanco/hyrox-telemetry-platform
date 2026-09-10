@@ -222,6 +222,10 @@ run_one() {
 
     local start_iso; start_iso="$(date -u +%Y-%m-%dT%H:%M:%S+00:00)"
 
+    # reparto de pods por nodo: con quién comparte nodo cada réplica cambia su
+    # rendimiento, y el planificador lo cambia solo en cada reinicio
+    bash "$ROOT/experiments/load-tests/record_placement.sh" "$rundir/placement.csv"
+
     # muestreo de recursos en segundo plano
     bash "$ROOT/experiments/load-tests/sample_resources.sh" "$rundir/resources.csv" 2 &
     local sampler_pid=$!

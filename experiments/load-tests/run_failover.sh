@@ -136,6 +136,7 @@ sample_replicas() {
     done
 }
 
+bash "$ROOT/experiments/load-tests/record_placement.sh" "$OUTDIR/placement.csv"
 seguir_logs & LOGS_PID=$!
 sample_replicas "$OUTDIR/replicas.csv" & REPL_PID=$!
 bash "$ROOT/experiments/load-tests/sample_resources.sh" "$OUTDIR/resources.csv" "$POLL" & SAMPLER_PID=$!
