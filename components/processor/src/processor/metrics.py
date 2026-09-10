@@ -15,7 +15,6 @@ import json
 import sys
 import threading
 import time
-from collections import deque
 from datetime import datetime, timezone
 
 
@@ -99,7 +98,7 @@ class Metrics:
             self.total_errors += n
 
     def record_pending(self, n: int) -> None:
-        """Tamaño de la cola de marcas pendientes tras confirmarse un lote."""
+        """Puntos encolados para escritura y sin confirmar, al cerrarse un lote."""
         with self._lock:
             self._win_pending.append(n)
 
@@ -137,9 +136,9 @@ class Metrics:
                 "lat_transport_ms": _summary(self._consume_lat),
                 "lat_persist_ms": _summary(self._persist_lat),
                 # El mínimo es el dato: es el suelo que la cola no baja en toda
-                # la ventana, es decir, las marcas atrapadas. El último valor se
-                # emite al lado para poder distinguir un suelo estable de una
-                # cola que está creciendo de verdad.
+                # la ventana, es decir, el retraso que el escritor no llega a
+                # recuperar entre lotes. El último valor se emite al lado para
+                # distinguir un suelo estable de una cola que crece.
                 "persist_pending_min": min(self._win_pending) if self._win_pending else None,
                 "persist_pending": self._win_pending[-1] if self._win_pending else None,
                 "total_consumed": self.total_consumed,
@@ -183,51 +182,3 @@ class MetricsFanout:
     def record_pending(self, n: int) -> None:
         for sink in self._sinks:
             sink.record_pending(n)
-
-
-class PersistenceTracker:
-    """Empareja cada punto encolado con la confirmación de su lote.
-
-    Los puntos se encolan en orden y los lotes se confirman en ese orden, así
-    que basta una cola FIFO de marcas de tiempo: al confirmarse un lote de n
-    puntos, las n más antiguas dan la latencia de persistencia.
-    """
-
-    def __init__(self) -> None:
-        self._pending: deque[float] = deque()
-        self._lock = threading.Lock()
-
-    def on_enqueue(self) -> None:
-        with self._lock:
-            self._pending.append(time.monotonic())
-
-    def on_ack(self, n: int) -> list[float]:
-        """Latencias (ms) de los n puntos más antiguos confirmados."""
-        now = time.monotonic()
-        out: list[float] = []
-        with self._lock:
-            for _ in range(min(n, len(self._pending))):
-                out.append((now - self._pending.popleft()) * 1000.0)
-        return out
-
-    def on_drop(self, n: int) -> None:
-        """Descarta n marcas (lote fallido) para no desalinear la cola."""
-        with self._lock:
-            for _ in range(min(n, len(self._pending))):
-                self._pending.popleft()
-
-    def pending(self) -> int:
-        """Marcas encoladas y todavía sin confirmación de escritura.
-
-        En régimen esta cola sube y baja con cada ciclo de vaciado y vuelve a
-        rozar el cero. Un suelo permanente por encima de cero significa que hay
-        puntos que se encolaron para escritura y de los que nunca llegó
-        confirmación ni error: el cliente de InfluxDB los ha descartado en
-        silencio. Cuenta, por tanto, lecturas perdidas en el camino de
-        escritura, y explica además por qué la latencia de persistencia de esa
-        réplica sale inflada: las marcas que quedan atrapadas desplazan el
-        emparejamiento y añaden a cada medida posterior el tiempo que tardan en
-        producirse. Ver results/20260909_212221_diag_writer/validation.md.
-        """
-        with self._lock:
-            return len(self._pending)

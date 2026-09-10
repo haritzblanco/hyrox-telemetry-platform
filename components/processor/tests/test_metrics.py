@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from processor.metrics import Metrics, PersistenceTracker, _percentile, _summary
+from processor.metrics import Metrics, _percentile, _summary
 
 
 class TestPercentile:
@@ -81,54 +81,6 @@ class TestMetrics:
         m.start()
         assert m._thread is None
         m.stop()  # no debe fallar aunque no haya hilo
-
-
-class TestPersistenceTracker:
-    def test_ack_devuelve_las_mas_antiguas(self):
-        t = PersistenceTracker()
-        for _ in range(3):
-            t.on_enqueue()
-        lat = t.on_ack(2)
-        assert len(lat) == 2
-        assert all(v >= 0 for v in lat)
-        assert len(t._pending) == 1
-
-    def test_ack_mayor_que_pendientes_no_falla(self):
-        t = PersistenceTracker()
-        t.on_enqueue()
-        assert len(t.on_ack(5)) == 1
-        assert t.on_ack(5) == []
-
-    def test_drop_realinea_la_cola(self):
-        t = PersistenceTracker()
-        for _ in range(4):
-            t.on_enqueue()
-        t.on_drop(2)
-        assert len(t.on_ack(10)) == 2
-
-    def test_pending_cuenta_las_marcas_sin_confirmar(self):
-        t = PersistenceTracker()
-        for _ in range(10):
-            t.on_enqueue()
-        assert t.pending() == 10
-        t.on_ack(4)
-        assert t.pending() == 6
-
-    def test_pending_delata_los_puntos_descartados_en_silencio(self):
-        """Un lote que confirma menos puntos de los encolados deja suelo.
-
-        Es la firma del descarte silencioso del cliente de InfluxDB: las marcas
-        sobrantes no se recuperan nunca y toda medida posterior sale inflada.
-        """
-        t = PersistenceTracker()
-        for _ in range(10):
-            t.on_enqueue()
-        t.on_ack(7)          # el cliente perdió tres puntos por el camino
-        assert t.pending() == 3
-        for _ in range(5):   # sigue trabajando con normalidad
-            t.on_enqueue()
-        t.on_ack(5)
-        assert t.pending() == 3   # el suelo permanece
 
 
 class TestPendientesEnLaVentana:
