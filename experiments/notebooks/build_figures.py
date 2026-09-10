@@ -20,6 +20,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from datetime import datetime
 from pathlib import Path
 
 import matplotlib
@@ -97,6 +98,29 @@ def _caudal_sostenido(rundir: Path) -> float | None:
     return round(float(en_carga.median()), 1) if not en_carga.empty else None
 
 
+def _tasa_ofrecida(rundir: Path, nominal: float) -> float:
+    """Carga ofrecida real de la celda, en mensajes por segundo.
+
+    La tasa nominal es N atletas por el speedup, pero la carrera simulada se
+    estira algo más de lo previsto y la carga real queda un 13 a 15 por ciento
+    por debajo. Comparar el caudal confirmado contra la diagonal nominal deja
+    por debajo de ella incluso a las celdas que no pierden ni una lectura, que
+    es justo lo contrario de lo que la figura quiere enseñar.
+
+    Se mide como lo ofrecido (PUBACK del broker) entre la duración de la carga,
+    descontando el drenaje posterior. Si la celda no trae los tiempos, se
+    devuelve la nominal.
+    """
+    try:
+        d = json.loads((rundir / "run.json").read_text())
+        t0 = datetime.fromisoformat(d["start"])
+        t1 = datetime.fromisoformat(d["end"])
+        dur = (t1 - t0).total_seconds() - (d.get("drain_s") or 0)
+        return round(d["offered"] / dur, 1) if dur > 0 else nominal
+    except (OSError, KeyError, ValueError):
+        return nominal
+
+
 def _ejes(ax) -> None:
     """Rejilla discreta y marco abierto: el dato manda sobre el andamiaje."""
     ax.grid(True, axis="y", color="#d8d8d8", linewidth=0.6)
@@ -139,6 +163,21 @@ def _series_por_replicas(ax, df: pd.DataFrame, y: str) -> None:
 
 
 def fig_caudal(df: pd.DataFrame, destino: Path) -> None:
+    """Caudal confirmado en régimen contra la carga ofrecida nominal.
+
+    La diagonal va sobre la nominal y no sobre la tasa medida de la celda
+    (lo ofrecido entre la duración) porque esa medida sale sesgada a la baja: el
+    arranque y el cierre de las conexiones estiran el reloj sin aportar
+    mensajes. Lo confirma la matriz de producción de agosto, donde las celdas
+    sin pérdida sostienen 404, 606 y 807 msg/s con nominales de 400, 600 y 800,
+    mientras que la tasa medida de esas mismas celdas da 356, 527 y 696. La
+    nominal es la buena.
+
+    Que una celda sin pérdida quede por debajo de la diagonal no es un artefacto
+    del eje: significa que no siguió el ritmo en tiempo real y que absorbió la
+    carga gracias a la cola del broker, recuperando durante el drenaje. El dato
+    de si eso importa lo da la latencia de transporte.
+    """
     fig, ax = plt.subplots(figsize=(6.4, 4.0))
     lim = [df["target_rate_msg_s"].min(), df["target_rate_msg_s"].max()]
     ax.plot(lim, lim, linestyle="--", linewidth=1.2, color=REFERENCIA,
@@ -404,6 +443,7 @@ def main() -> int:
         if fila is None:
             continue
         fila["caudal_sostenido"] = _caudal_sostenido(d)
+        fila["tasa_ofrecida_m_s"] = _tasa_ofrecida(d, fila["target_rate_msg_s"])
         filas.append(fila)
     if not filas:
         raise SystemExit(f"sin corridas en {args.matrix}")
