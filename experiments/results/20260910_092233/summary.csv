@@ -1,0 +1,2 @@
+run,replicas,athletes,target_rate_msg_s,offered,delivered,loss_pct,consumed,acked,write_errors,thr_acked_s,lat_transport_mean_ms,lat_transport_p95_ms,lat_transport_p99_ms,lat_transport_p95worst_ms,lat_persist_mean_ms,lat_persist_p95_ms,lat_persist_p99_ms,lat_persist_p95worst_ms,marcas_atrapadas,desfase_persistencia,cpu_peak_m,cpu_mean_m,mem_peak_mi,mem_mean_mi
+R4_N16,4,16,800,63990,63990,0.0,63990,63990,0,612.5,119.38,121.8,125.01,131.72,321.52,553.95,587.09,843.94,20,,742.0,636.6,140.0,140.0
