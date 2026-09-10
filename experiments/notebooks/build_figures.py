@@ -71,22 +71,28 @@ def _caudal_sostenido(rundir: Path) -> float | None:
     Dividir el total confirmado entre el intervalo completo de ventanas mezcla
     el régimen estable con el arranque y con la cola de drenaje, y produce una
     cifra por debajo de la carga ofrecida incluso cuando no se ha perdido ni
-    una lectura. Aquí se suma el caudal de las réplicas instante a instante y se
-    toma la mediana de las ventanas en las que la corrida está realmente en
-    carga (la mitad del máximo observado), que es lo que la figura quiere
-    comparar con la diagonal ideal.
+    una lectura. Aquí se agrupa en cubos de diez segundos, se promedia dentro
+    del cubo el caudal de cada réplica y se suman las réplicas entre sí, que es
+    el caudal del sistema en ese tramo. La cifra final es la mediana de los
+    cubos en los que la corrida está realmente en carga (la mitad del máximo
+    observado), que es lo que la figura compara con la diagonal ideal.
+
+    El promedio por réplica antes de sumar no es opcional: con el intervalo de
+    métricas a dos segundos cada réplica emite cinco ventanas por cubo, y
+    sumarlas todas multiplicaría el caudal por cinco.
     """
     filas = []
     for jf in rundir.glob("proc_*.jsonl"):
         for w in _load_jsonl(jf):
             filas.append({"ts": pd.to_datetime(w["ts"]),
-                          "thr": w.get("thr_acked_s", 0.0)})
+                          "thr": w.get("thr_acked_s", 0.0),
+                          "replica": jf.name})
     if not filas:
         return None
     df = pd.DataFrame(filas)
     t0 = df["ts"].min()
     df["cubo"] = ((df["ts"] - t0).dt.total_seconds() // 10).astype(int)
-    agregado = df.groupby("cubo")["thr"].sum()
+    agregado = df.groupby(["cubo", "replica"])["thr"].mean().groupby("cubo").sum()
     en_carga = agregado[agregado >= 0.5 * agregado.max()]
     return round(float(en_carga.median()), 1) if not en_carga.empty else None
 
